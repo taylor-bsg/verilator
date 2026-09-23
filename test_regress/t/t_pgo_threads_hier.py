@@ -9,6 +9,8 @@
 
 import vltest_bootstrap
 
+import shutil
+
 test.scenarios('vltmt')
 test.top_filename = "t/t_hier_block_perf.v"
 cycles = 100
@@ -19,6 +21,13 @@ config_file = test.t_dir + "/" + test.name + ".vlt"
 flags = [config_file, "--hierarchical", "-Wno-UNOPTFLAT", "-DSIM_CYCLES=" + str(cycles)]
 
 test.compile(v_flags2=["--prof-pgo"] + flags, threads=threads)
+
+# Exported ports must retain source order regardless of internal field layout.
+ports = test.file_grep(test.obj_dir + '/VTest/Test.sv', r'(?s)module Test \((.*?)\);')
+if ports:
+    names = [port.split()[-1] for port in ports[0].split(',')]
+    if names != ['rdata', 'rdata2', 'clk', 'we', 'sel', 'wdata']:
+        test.error('Exported module port order differs from source: ' + str(names))
 
 test.execute(all_run_flags=[
     "+verilator+prof+exec+start+0",
@@ -33,6 +42,14 @@ test.file_grep(test.obj_dir + "/profile.vlt", r'profile_data -model "V' + test.n
 # Check for cost rollovers
 test.file_grep_not(test.obj_dir + "/profile.vlt", r'.*cost 64\'d\d{18}.*')
 
+# PGO changes field layout, but must preserve the exported DPI interface.
+wrappers = [
+    test.obj_dir + '/' + name
+    for name in ('VTest/Test.sv', 'VCheck/Check.sv', 'VCoreHier/CoreHier.sv')
+]
+for filename in wrappers:
+    shutil.copyfile(filename, filename + '.before_pgo')
+
 # Differentiate results
 test.name = test.name + "_optimized"
 test.compile(
@@ -42,5 +59,8 @@ test.compile(
     threads=threads)
 
 test.execute()
+
+for filename in wrappers:
+    test.files_identical(filename, filename + '.before_pgo')
 
 test.passes()

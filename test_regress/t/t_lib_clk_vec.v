@@ -4,6 +4,11 @@
 // SPDX-FileCopyrightText: 2025 Wilson Snyder
 // SPDX-License-Identifier: CC0-1.0
 
+// verilog_format: off
+`define stop $stop
+`define checkh(gotv,expv) do if ((gotv) !== (expv)) begin $write("%%Error: %s:%0d: got=%p exp=%p (%s !== %s)\n", `__FILE__, `__LINE__, (gotv), (expv), `"gotv`", `"expv`"); `stop; end while (0);
+// verilog_format: on
+
 // The number of clocks in the clock vector
 
 localparam int N = 5;
@@ -13,8 +18,16 @@ localparam int N = 5;
 
 module sub (
     input logic [N-1:0] clkvec,
-    output logic [7:0] cnt[N]
+    output logic [7:0] cnt[N],
+    input logic [6:0] din,
+    inout wire [6:0] bus_z,
+    inout wire [6:0] bus_a,
+    output wire [6:0] seen
 );
+
+  assign bus_z = clkvec[0] ? din : 7'bz;
+  assign bus_a = clkvec[1] ? (din ^ 7'h55) : 7'bz;
+  assign seen = bus_z ^ bus_a;
 
   for (genvar i = 0; i < N; ++i) begin : GEN
     logic [7:0] counter = 8'd0;
@@ -31,17 +44,31 @@ module top;
 
   logic [N-1:0] clkvec = N'(0);
   logic [7:0] cnt[N];
+  wire [6:0] a_en, a_out, z_en, z_out, seen;
 
   // Generate clocks by rotation
   always #5 clkvec = {clkvec[N-2:0], clkvec[N-1] | ~|clkvec};
 
   sub sub_i (
-      clkvec,
-      cnt
+      .clkvec(clkvec),
+      .cnt(cnt),
+      .din(7'h35),
+      .bus_z(7'h27),
+      .bus_a(7'h14),
+      .seen(seen),
+      .bus_a__en(a_en),
+      .bus_a__out(a_out),
+      .bus_z__en(z_en),
+      .bus_z__out(z_out)
   );
 
   always @(clkvec) begin
     #1;
+    `checkh(seen, 7'h33);
+    `checkh(z_en, {7{clkvec[0]}});
+    `checkh(a_en, {7{clkvec[1]}});
+    if (clkvec[0]) `checkh(z_out, 7'h35);
+    if (clkvec[1]) `checkh(a_out, 7'h60);
     $write("%10t %05b", $time, clkvec);
     for (int i = N - 1; i >= 0; --i) begin
       $write(" cnt[%0d]=%02d", i, cnt[i]);
