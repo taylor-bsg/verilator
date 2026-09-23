@@ -46,12 +46,14 @@ class GatherMTaskAffinity final : VNVisitorConst {
     // STATE
     MTaskAffinityMap& m_results;  // The result map being built;
     const uint32_t m_id;  // Id of mtask being analysed
+    const uint32_t m_writeId;  // Preserve the precise task responsible for writes
     const size_t m_usedIds = ExecMTask::numUsedIds();  // Value of max id + 1
 
     // CONSTRUCTOR
     GatherMTaskAffinity(const ExecMTask* mTaskp, MTaskAffinityMap& results)
         : m_results{results}
-        , m_id{mTaskp->id()} {
+        , m_id{mTaskp->affinityId()}
+        , m_writeId{mTaskp->id()} {
         iterateConst(mTaskp->funcp());
     }
     ~GatherMTaskAffinity() = default;
@@ -66,9 +68,10 @@ class GatherMTaskAffinity final : VNVisitorConst {
         MTaskIdVec& affinity = m_results
                                    .emplace(std::piecewise_construct,  //
                                             std::forward_as_tuple(varp),  //
-                                            std::forward_as_tuple(m_usedIds))
+                                            std::forward_as_tuple(2 * m_usedIds))
                                    .first->second;
         affinity[m_id] = true;
+        if (nodep->access().isWriteOrRW()) affinity[m_usedIds + m_writeId] = true;
     }
 
     void visit(AstCFunc* nodep) override {
@@ -137,7 +140,7 @@ class VariableOrder final {
     void mtaskSortVars(std::vector<AstVar*>& varps) {
         // Map from "MTask affinity" -> "variable list"
         std::map<MTaskIdVec, std::vector<AstVar*>> m2v;
-        const MTaskIdVec emptyVec(ExecMTask::numUsedIds(), false);
+        const MTaskIdVec emptyVec(2 * ExecMTask::numUsedIds(), false);
         for (AstVar* const varp : varps) {
             const auto it = m_mTaskAffinity.find(varp);
             const MTaskIdVec& key = it == m_mTaskAffinity.end() ? emptyVec : it->second;
