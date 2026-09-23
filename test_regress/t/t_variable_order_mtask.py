@@ -45,8 +45,10 @@ aligned_var_re = r'alignas\(VL_CACHE_LINE_BYTES\) (?:CData|SData|IData|QData|VlW
 
 if test.vltmt:
     test.file_grep(root_h, aligned_var_re)
-    test.file_grep(test.stats, r'VariableOrder, MTask affinity groups\s+([1-9]\d*)')
-    test.file_grep(test.stats, r'VariableOrder, MTask aligned group starts\s+([1-9]\d*)')
+    # Coalesce reader tasks on the same worker, but retain three distinct
+    # register-bank writer groups, the output group, and the read-only group.
+    test.file_grep(test.stats, r'VariableOrder, MTask affinity groups\s+(\d+)', 5)
+    test.file_grep(test.stats, r'VariableOrder, MTask aligned group starts\s+(\d+)', 5)
 else:
     test.file_grep_not(root_h, aligned_var_re)
     test.file_grep_not(test.stats, r'VariableOrder, MTask affinity groups')
