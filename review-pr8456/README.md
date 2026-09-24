@@ -13,11 +13,11 @@ distribution headers).
 
 1. `Internals: Remove sequence number argument from DfgGraph::makeNewVar`
    — answers gezalore's latest review comment.
-2. `Tests: run t_dfg_temp_sharing with -fno-gate` — makes the test's
+1. `Tests: run t_dfg_temp_sharing with -fno-gate` — makes the test's
    self-checks observe the shared declarations.
-3. `Tests: cover BreakCycles TraceDriver temporary creation` — covers the
+1. `Tests: cover BreakCycles TraceDriver temporary creation` — covers the
    one patch line that upstream coverage reports as unexecuted.
-4. This folder (not for merge).
+1. This folder (not for merge).
 
 ## Summary
 
@@ -29,10 +29,10 @@ problem. Open items, most important first:
    multithreaded models 3–8% slower on a benchmark of the shape wsnyder
    suggested (single-threaded is about 2% faster). The cause is data layout,
    not function combining.
-2. gezalore's `n` comment is valid as a design point (not a bug). Commit 1.
-3. The PR's test cannot detect the bug class it describes, because V3Gate
+1. gezalore's `n` comment is valid as a design point (not a bug). Commit 1.
+1. The PR's test cannot detect the bug class it describes, because V3Gate
    inlines every temporary. Commit 2.
-4. Upstream coverage is 18 of 19 changed lines; the missing line is never
+1. Upstream coverage is 18 of 19 changed lines; the missing line is never
    reached by any test. Commit 3.
 
 ## Findings
@@ -60,6 +60,7 @@ creates a new declaration, and ignores it when it reuses a slot.
   (see finding 5).
 
 Verification of commit 1:
+
 - Builds warning-free with `-W -Wall -Wextra -Werror` (debug configuration),
   clang-format-18 clean.
 - Generated C++ identical to the PR after normalizing temporary names and
@@ -76,7 +77,7 @@ PR/baseline ratio of median wall time (below 1 means the PR is faster):
 
 | run | 1 thread | 2 | 4 | 6 | 8 |
 |---|---|---|---|---|---|
-| A: 9 reps | 0.975 | 1.042 | 1.046 | 1.080 | 0.994* |
+| A: 9 reps | 0.975 | 1.042 | 1.046 | 1.080 | 0.994\* |
 | B: 11 reps, same models as A | 0.978 | – | 1.043 | 1.057 | – |
 | C: `-fno-combine`, 9 reps | 0.986 | – | 1.030 | 1.058 | – |
 | D: regenerated models, 7 / 15 reps | 0.982 | – | 1.034 / 1.031 | 1.032 (15 reps) | – |
@@ -129,6 +130,7 @@ How the path is reached: `TraceDriver` creates a temporary when a traced
 `DfgSplicePacked` lies outside the component being fixed and there is no
 default driver. `visit(DfgSpliceArray)` clears the default driver before
 tracing an element's packed splice, so the recipe is:
+
 - an unpacked array in a variable-level cycle through another element, where
 - the element being read is driven in pieces **with a gap** — fully covering
   pieces get coalesced into a `DfgConcat` during synthesis.
@@ -267,5 +269,6 @@ Mutation check: apply `mutant-alias-slots.patch` to the PR head, rebuild,
 then run `t_dfg_temp_sharing` with and without commit 2's `-fno-gate`.
 
 Caveats:
+
 - One machine with heterogeneous cores; the benchmark is synthetic.
 - The RTLmeter run for this revision is the authoritative performance check.
