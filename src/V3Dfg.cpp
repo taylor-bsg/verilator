@@ -115,21 +115,22 @@ std::string DfgGraph::makeUniqueName(const std::string& prefix, size_t n) {
     return "__Vdfg" + prefix + m_tmpNameStub + std::to_string(n);
 }
 
-DfgVertexVar* DfgGraph::makeNewVar(FileLine* flp, const std::string& prefix, size_t n,
+DfgVertexVar* DfgGraph::makeNewVar(FileLine* flp, const std::string& prefix,
                                    const DfgDataType& dtype, AstScope* scopep) {
     // AstVar declarations outlive all DFG graphs. Splitting or merging graphs
     // does not transfer slots: each graph creates globally unique declarations.
     TempDeclarations& temps = m_temporaries[scopep->modp()][{prefix, dtype.astDtypep()}];
     const size_t slot = temps.m_scopeCounts[scopep]++;
-    AstVar* varp;
     if (slot == temps.m_declps.size()) {
-        varp = new AstVar{flp, VVarType::MODULETEMP, makeUniqueName(prefix, n), dtype.astDtypep()};
+        // First use of this slot, create the declaration
+        const std::string name = makeUniqueName(prefix, m_nTempDeclarations++);
+        AstVar* const varp = new AstVar{flp, VVarType::MODULETEMP, name, dtype.astDtypep()};
         scopep->modp()->addStmtsp(varp);
         temps.m_declps.emplace_back(varp);
     } else {
-        varp = temps.m_declps[slot];
         ++m_tempDeclarationsReused;
     }
+    AstVar* const varp = temps.m_declps[slot];
     // Create AstVarScope
     AstVarScope* const vscp = new AstVarScope{flp, scopep, varp};
     // Add to scope
