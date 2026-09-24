@@ -1,0 +1,12 @@
+--- a/src/V3Dfg.cpp
++++ b/src/V3Dfg.cpp
+@@ -120,7 +120,8 @@
+     // AstVar declarations outlive all DFG graphs. Splitting or merging graphs
+     // does not transfer slots: each graph creates globally unique declarations.
+     TempDeclarations& temps = m_temporaries[scopep->modp()][{prefix, dtype.astDtypep()}];
+-    const size_t slot = temps.m_scopeCounts[scopep]++;
++    // MUTANT: ignore per-scope slot consumption -> temps in one scope alias
++    const size_t slot = (temps.m_scopeCounts[scopep]++, 0);
+     AstVar* varp;
+     if (slot == temps.m_declps.size()) {
+         varp = new AstVar{flp, VVarType::MODULETEMP, makeUniqueName(prefix, n), dtype.astDtypep()};
