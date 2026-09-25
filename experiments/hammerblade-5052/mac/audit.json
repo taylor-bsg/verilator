@@ -1,0 +1,59 @@
+{
+  "all_18_correctness_and_marker_checks_pass": true,
+  "all_6_confirmation_checks_pass": true,
+  "all_24_correctness_and_marker_checks_pass": true,
+  "primary_measurements": 15,
+  "initial_aes_measurements_retained_but_excluded": 6,
+  "exclusion_reason": "Display turned off during initial AES round 2 progress; all six original AES timings excluded from primary results regardless of direction, and exact six-run order repeated under caffeinate -diu.",
+  "display_events": [
+    {
+      "epoch": 1790178648.0,
+      "line": "2026-09-23 08:50:48 -0700 Notification        \tDisplay is turned off                                                      \t          ",
+      "overlapping_runs": [
+        "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-untuned-5052-20260922/runs/aes-round-2-progress"
+      ]
+    },
+    {
+      "epoch": 1790184367.0,
+      "line": "2026-09-23 10:26:07 -0700 Notification        \tDisplay is turned on                                                       \t          ",
+      "overlapping_runs": []
+    }
+  ],
+  "no_display_changes_within_primary_workload_sequences": true,
+  "confirmation_display_sleep_prevention_asserted": true,
+  "frozen_model_and_library_hashes_unchanged": true,
+  "no_native_pgo_or_manual_cost_input": true,
+  "no_generated_pgo_instrumentation": true,
+  "all_runs_serial_and_after_builds": true,
+  "power_source_ac_at_all_run_boundaries": true,
+  "power_config_identical": true,
+  "sleep_wake_events_during_sequence": [],
+  "process_checks": "No competing simulator/compiler/build process at run boundaries; not continuous exclusivity monitoring.",
+  "thermal_checks": "Native warning/status reads, not per-core frequency/temperature measurements.",
+  "tuned_vs_untuned_task_bodies_equal": true,
+  "tuned_vs_untuned_schedules_equal": false,
+  "untuned_matches_original_training_schedule": true,
+  "untuned_matches_original_training_task_bodies": true,
+  "preserved_bundle_checks": {
+    "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-timing-5052-20260922": {
+      "returncode": 0,
+      "files_ok": 1451,
+      "failures": []
+    },
+    "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-pgo-5052-20260922": {
+      "returncode": 0,
+      "files_ok": 1417,
+      "failures": []
+    },
+    "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-progress-5052-20260921": {
+      "returncode": 0,
+      "files_ok": 570,
+      "failures": []
+    },
+    "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-merged-5052-alignment-20260921": {
+      "returncode": 0,
+      "files_ok": 598,
+      "failures": []
+    }
+  }
+}

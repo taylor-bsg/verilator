@@ -1,0 +1,508 @@
+{
+  "title": "Untuned Verilator 5.052 progress-protocol comparison on M5 Max",
+  "measurement_date": "2026-09-23",
+  "scope": "Physical 16x8 HammerBlade, Proc+Endpoint hierarchy, one host worker versus five; software-only synchronization prototype, no RTL/application changes.",
+  "primary_policy": "No runtime PGO collection/use or manual hierarchy cost hints. Preserve ordinary generated static costs; same five-worker task bodies and lane order for counters/progress.",
+  "compiler": {
+    "argv": [
+      "/usr/bin/clang++",
+      "--version"
+    ],
+    "returncode": 0,
+    "output": "Apple clang version 21.0.0 (clang-2100.1.1.101)\nTarget: arm64-apple-darwin25.4.0\nThread model: posix\nInstalledDir: /Library/Developer/CommandLineTools/usr/bin\n"
+  },
+  "os": {
+    "argv": [
+      "sw_vers"
+    ],
+    "returncode": 0,
+    "output": "ProductName:\t\tmacOS\nProductVersion:\t\t26.4\nBuildVersion:\t\t25E246\n"
+  },
+  "hardware": "physical 16x8; pod_X1Y1_ruche_X16Y8_hbm_one_pseudo_channel; processor+endpoint hierarchy; blocking caches; iPoly=1",
+  "flags": "fast -O2 -march=native; cold unoptimized; support -Os; Apple Clang",
+  "source_pins": {
+    "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-pgo-5052-20260922/bsg_replicant": "06997a3cc8ec48243538d3b307bf1e345bdb25b5",
+    "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-progress-5052-20260921/verilator": "ea338be98e1e838d3518809ce8899f85a009963c",
+    "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-merged-5052-alignment-20260921/bsg_bladerunner-16x8": "6b33a79d2cf356a91e9b920df83037aa07c29cf6",
+    "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-merged-5052-alignment-20260921/bsg_bladerunner-16x8/bsg_manycore": "0052ce8594864befae2b85d55193706c88b14584",
+    "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-merged-5052-alignment-20260921/bsg_bladerunner-16x8/basejump_stl": "fa07b1f180d0d313e15dc828249eea07b341852b"
+  },
+  "verilator_tool": {
+    "path": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-progress-5052-20260921/verilator/bin/verilator_bin",
+    "sha256": "c3b0242ec4341f5da2a8d6dbd14af2778e1daeb695a0a9a7be674cf35e0931dd",
+    "version_base": "5.052",
+    "prototype": "Opt-in progress protocol plus padding, same patched tool with prototype disabled for controls."
+  },
+  "models": {
+    "one": {
+      "sha256": "6c221dfb4f305df00b1596583a5347e205b497544aa0f6b2eed146d5b50bcf47",
+      "workers": 1,
+      "progress": false,
+      "native_pgo": false,
+      "manual_cost_hints": false,
+      "flags": [
+        "--stats",
+        "--no-prof-pgo",
+        "--no-threads-progress"
+      ],
+      "build_seconds": {
+        "real": 52.02,
+        "user": 136.62,
+        "sys": 9.02
+      },
+      "task_graph_stats": {},
+      "automatic_static_child_costs": [
+        [
+          "bsg_manycore_proc_vanilla_c_protectlib_combo_update",
+          "64",
+          "47230"
+        ],
+        [
+          "bsg_manycore_proc_vanilla_c_protectlib_seq_update",
+          "64",
+          "47230"
+        ],
+        [
+          "bsg_manycore_proc_vanilla_c_protectlib_combo_ignore",
+          "64",
+          "1"
+        ]
+      ]
+    },
+    "counter": {
+      "sha256": "d8384978a391eaaa75b71f04cc187d884bfed2d02d97724d43fc1994a63bffee",
+      "workers": 5,
+      "progress": false,
+      "native_pgo": false,
+      "manual_cost_hints": false,
+      "flags": [
+        "--stats",
+        "--no-prof-pgo",
+        "--no-threads-progress"
+      ],
+      "build_seconds": {
+        "real": 55.65,
+        "user": 146.42,
+        "sys": 9.03
+      },
+      "task_graph_stats": {
+        "MTask graph, final, critical path cost": 2273046,
+        "MTask graph, final, edge count": 73,
+        "MTask graph, final, mtask count": 43,
+        "MTask graph, final, parallelism factor": 7,
+        "MTask graph, final, total graph cost": 15710348
+      },
+      "automatic_static_child_costs": [
+        [
+          "bsg_manycore_proc_vanilla_c_protectlib_combo_update",
+          "64",
+          "47230"
+        ],
+        [
+          "bsg_manycore_proc_vanilla_c_protectlib_seq_update",
+          "64",
+          "47230"
+        ],
+        [
+          "bsg_manycore_proc_vanilla_c_protectlib_combo_ignore",
+          "64",
+          "1"
+        ]
+      ]
+    },
+    "progress": {
+      "sha256": "cc82c4e255fe8781fd11815d17d948a71bd70d776fe9f671f2923a81d0e1217f",
+      "workers": 5,
+      "progress": true,
+      "native_pgo": false,
+      "manual_cost_hints": false,
+      "flags": [
+        "--stats",
+        "--no-prof-pgo",
+        "--threads-progress"
+      ],
+      "build_seconds": {
+        "real": 55.63,
+        "user": 146.21,
+        "sys": 8.87
+      },
+      "task_graph_stats": {
+        "MTask graph, final, critical path cost": 2273046,
+        "MTask graph, final, edge count": 73,
+        "MTask graph, final, mtask count": 43,
+        "MTask graph, final, parallelism factor": 7,
+        "MTask graph, final, total graph cost": 15710348,
+        "Optimizations, Thread progress publications": 17,
+        "Optimizations, Thread progress replaced notifications": 54,
+        "Optimizations, Thread progress waits": 37
+      },
+      "automatic_static_child_costs": [
+        [
+          "bsg_manycore_proc_vanilla_c_protectlib_combo_update",
+          "64",
+          "47230"
+        ],
+        [
+          "bsg_manycore_proc_vanilla_c_protectlib_seq_update",
+          "64",
+          "47230"
+        ],
+        [
+          "bsg_manycore_proc_vanilla_c_protectlib_combo_ignore",
+          "64",
+          "1"
+        ]
+      ]
+    }
+  },
+  "primary_groups": [
+    {
+      "case": "pr-wv",
+      "mode": "one",
+      "workers": 1,
+      "trials": 3,
+      "all_valid": true,
+      "wall_seconds": [
+        25.57,
+        26.05,
+        25.96
+      ],
+      "mean_wall": 25.86,
+      "median_wall": 25.96,
+      "min_wall": 25.57,
+      "max_wall": 26.05,
+      "stdev_wall": 0.25514701644346177,
+      "mean_cpu": 25.830000000000002,
+      "speedup_vs_one": 1.0,
+      "cpu_multiplier_vs_one": 1.0
+    },
+    {
+      "case": "pr-wv",
+      "mode": "counter",
+      "workers": 5,
+      "trials": 3,
+      "all_valid": true,
+      "wall_seconds": [
+        23.41,
+        23.42,
+        23.44
+      ],
+      "mean_wall": 23.423333333333336,
+      "median_wall": 23.42,
+      "min_wall": 23.41,
+      "max_wall": 23.44,
+      "stdev_wall": 0.015275252316519916,
+      "mean_cpu": 102.84,
+      "speedup_vs_one": 1.1040273231820121,
+      "cpu_multiplier_vs_one": 3.981416957026713
+    },
+    {
+      "case": "pr-wv",
+      "mode": "progress",
+      "workers": 5,
+      "trials": 3,
+      "all_valid": true,
+      "wall_seconds": [
+        23.04,
+        23.3,
+        23.05
+      ],
+      "mean_wall": 23.13,
+      "median_wall": 23.05,
+      "min_wall": 23.04,
+      "max_wall": 23.3,
+      "stdev_wall": 0.14730919862656283,
+      "mean_cpu": 101.22666666666666,
+      "speedup_vs_one": 1.1180285343709468,
+      "cpu_multiplier_vs_one": 3.9189572848109426
+    },
+    {
+      "case": "aes",
+      "mode": "one",
+      "workers": 1,
+      "trials": 2,
+      "all_valid": true,
+      "wall_seconds": [
+        75.21,
+        75.07
+      ],
+      "mean_wall": 75.13999999999999,
+      "median_wall": 75.13999999999999,
+      "min_wall": 75.07,
+      "max_wall": 75.21,
+      "stdev_wall": 0.09899494936611705,
+      "mean_cpu": 75.08000000000001,
+      "speedup_vs_one": 1.0,
+      "cpu_multiplier_vs_one": 1.0
+    },
+    {
+      "case": "aes",
+      "mode": "counter",
+      "workers": 5,
+      "trials": 2,
+      "all_valid": true,
+      "wall_seconds": [
+        67.63,
+        66.81
+      ],
+      "mean_wall": 67.22,
+      "median_wall": 67.22,
+      "min_wall": 66.81,
+      "max_wall": 67.63,
+      "stdev_wall": 0.5798275605729641,
+      "mean_cpu": 296.02,
+      "speedup_vs_one": 1.117822076762868,
+      "cpu_multiplier_vs_one": 3.942727757059136
+    },
+    {
+      "case": "aes",
+      "mode": "progress",
+      "workers": 5,
+      "trials": 2,
+      "all_valid": true,
+      "wall_seconds": [
+        65.99,
+        66.11
+      ],
+      "mean_wall": 66.05,
+      "median_wall": 66.05,
+      "min_wall": 65.99,
+      "max_wall": 66.11,
+      "stdev_wall": 0.08485281374238891,
+      "mean_cpu": 290.085,
+      "speedup_vs_one": 1.1376230128690386,
+      "cpu_multiplier_vs_one": 3.8636787426744794
+    }
+  ],
+  "primary_comparisons": [
+    {
+      "case": "pr-wv",
+      "progress_speedup_vs_counter": 1.0126819426430322,
+      "progress_wall_reduction_percent": 1.2523125088942821
+    },
+    {
+      "case": "aes",
+      "progress_speedup_vs_counter": 1.0177138531415595,
+      "progress_wall_reduction_percent": 1.740553406724188
+    }
+  ],
+  "selection": "Initial three trials/mode PageRank; six display-awake AES confirmation trials. Original AES timings retained unchanged in summary.json, excluded due to the recorded display transition, not selected by outcome.",
+  "correctness": {
+    "all_24_runs_pass": true,
+    "primary_trials": 15,
+    "warmups": 3,
+    "original_aes_retained_excluded": 6,
+    "expected_markers": {
+      "pr-wv": {
+        "ordered_pairs": 128,
+        "rows": 256,
+        "first_cycle": 205449,
+        "last_cycle": 219946,
+        "envelope_cycles": 14497,
+        "summed_tile_marker_spans": 1831112,
+        "summed_hardware_tile_cycles": null,
+        "first_time_ps": 136839690,
+        "last_time_ps": 146494692,
+        "period_ps": 666
+      },
+      "aes": {
+        "ordered_pairs": 128,
+        "rows": 256,
+        "first_cycle": 280611,
+        "last_cycle": 668787,
+        "envelope_cycles": 388176,
+        "summed_tile_marker_spans": 49638787,
+        "summed_hardware_tile_cycles": null,
+        "first_time_ps": 186897582,
+        "last_time_ps": 445422798,
+        "period_ps": 666
+      }
+    },
+    "contract": "Existing application checker and byte-identical 128 ordered tile-marker pairs; not an exhaustive equivalence proof."
+  },
+  "environmental_audit": {
+    "power_source_ac_at_all_run_boundaries": true,
+    "power_config_identical": true,
+    "sleep_wake_events_during_sequence": [],
+    "display_events": [
+      {
+        "epoch": 1790178648.0,
+        "line": "2026-09-23 08:50:48 -0700 Notification        \tDisplay is turned off                                                      \t          ",
+        "overlapping_runs": [
+          "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-untuned-5052-20260922/runs/aes-round-2-progress"
+        ]
+      },
+      {
+        "epoch": 1790184367.0,
+        "line": "2026-09-23 10:26:07 -0700 Notification        \tDisplay is turned on                                                       \t          ",
+        "overlapping_runs": []
+      }
+    ],
+    "no_display_changes_within_primary_workload_sequences": true,
+    "confirmation_display_sleep_prevention_asserted": true,
+    "process_checks": "No competing simulator/compiler/build process at run boundaries; not continuous exclusivity monitoring.",
+    "thermal_checks": "Native warning/status reads, not per-core frequency/temperature measurements."
+  },
+  "secondary_pgo_study": {
+    "raw_root": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-timing-5052-20260922",
+    "manifest_sha256": "a3d3c24f8c288b256cb00f652688802ed5dd6b4575a3286f5c40d47f8648208b",
+    "groups": [
+      {
+        "case": "pr-wv",
+        "mode": "one",
+        "workers": 1,
+        "trials": 3,
+        "all_valid": true,
+        "wall_seconds": [
+          24.22,
+          24.86,
+          24.79
+        ],
+        "mean_wall": 24.62333333333333,
+        "median_wall": 24.79,
+        "min_wall": 24.22,
+        "max_wall": 24.86,
+        "stdev_wall": 0.3510460558578226,
+        "mean_cpu": 24.6,
+        "speedup_vs_one": 1.0,
+        "cpu_multiplier_vs_one": 1.0
+      },
+      {
+        "case": "pr-wv",
+        "mode": "counter",
+        "workers": 5,
+        "trials": 3,
+        "all_valid": true,
+        "wall_seconds": [
+          20.41,
+          20.4,
+          20.42
+        ],
+        "mean_wall": 20.41,
+        "median_wall": 20.41,
+        "min_wall": 20.4,
+        "max_wall": 20.42,
+        "stdev_wall": 0.010000000000001563,
+        "mean_cpu": 97.83999999999999,
+        "speedup_vs_one": 1.2064347542054548,
+        "cpu_multiplier_vs_one": 3.977235772357723
+      },
+      {
+        "case": "pr-wv",
+        "mode": "progress",
+        "workers": 5,
+        "trials": 3,
+        "all_valid": true,
+        "wall_seconds": [
+          19.7,
+          19.64,
+          19.66
+        ],
+        "mean_wall": 19.666666666666668,
+        "median_wall": 19.66,
+        "min_wall": 19.64,
+        "max_wall": 19.7,
+        "stdev_wall": 0.03055050463303828,
+        "mean_cpu": 94.07333333333334,
+        "speedup_vs_one": 1.2520338983050845,
+        "cpu_multiplier_vs_one": 3.824119241192412
+      },
+      {
+        "case": "aes",
+        "mode": "one",
+        "workers": 1,
+        "trials": 2,
+        "all_valid": true,
+        "wall_seconds": [
+          76.01,
+          75.62
+        ],
+        "mean_wall": 75.815,
+        "median_wall": 75.815,
+        "min_wall": 75.62,
+        "max_wall": 76.01,
+        "stdev_wall": 0.27577164466275395,
+        "mean_cpu": 75.755,
+        "speedup_vs_one": 1.0,
+        "cpu_multiplier_vs_one": 1.0
+      },
+      {
+        "case": "aes",
+        "mode": "counter",
+        "workers": 5,
+        "trials": 2,
+        "all_valid": true,
+        "wall_seconds": [
+          61.02,
+          60.96
+        ],
+        "mean_wall": 60.99,
+        "median_wall": 60.99,
+        "min_wall": 60.96,
+        "max_wall": 61.02,
+        "stdev_wall": 0.04242640687119446,
+        "mean_cpu": 292.03999999999996,
+        "speedup_vs_one": 1.2430726348581733,
+        "cpu_multiplier_vs_one": 3.855059072008448
+      },
+      {
+        "case": "aes",
+        "mode": "progress",
+        "workers": 5,
+        "trials": 2,
+        "all_valid": true,
+        "wall_seconds": [
+          58.62,
+          58.89
+        ],
+        "mean_wall": 58.754999999999995,
+        "median_wall": 58.754999999999995,
+        "min_wall": 58.62,
+        "max_wall": 58.89,
+        "stdev_wall": 0.19091883092037004,
+        "mean_cpu": 280.83000000000004,
+        "speedup_vs_one": 1.2903582673814995,
+        "cpu_multiplier_vs_one": 3.7070820407893876
+      }
+    ],
+    "comparisons": [
+      {
+        "case": "pr-wv",
+        "progress_speedup_vs_counter": 1.0377966101694915,
+        "progress_wall_reduction_percent": 3.6420055528335715
+      },
+      {
+        "case": "aes",
+        "progress_speedup_vs_counter": 1.0380393158029104,
+        "progress_wall_reduction_percent": 3.664535169699956
+      }
+    ],
+    "interpretation": "Separate-day tuned schedule, not an interleaved PGO-on/off causal comparison. Do not substitute its benefit for untuned operation."
+  },
+  "limitations": [
+    "Three PageRank and two AES trials per mode; small host/workload-scoped differences, not broad statistical claims.",
+    "Core placement/frequency and continuous background activity not controlled; only boundary process/power reads and intervening sleep/display log.",
+    "Wall time covers entire simulator process; target kernel cycles are correctness invariants.",
+    "Aggregate CPU time is not energy. Five workers substantially increase CPU-seconds.",
+    "Measures combined protocol/padding; neither component isolated; static notification counts do not measure coherence traffic.",
+    "Both studies are Verilator 5.052; older 5.050 speedups must not be mixed into their baselines."
+  ],
+  "raw_root": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-untuned-5052-20260922",
+  "raw_files": [
+    "REPORT.md",
+    "plan.json",
+    "frozen.json",
+    "primary-summary.json",
+    "summary.json",
+    "confirmation/plan.json",
+    "confirmation/summary.json",
+    "confirmation/measurement-start.json",
+    "results-table.md",
+    "audit.json",
+    "checks/power-log.json",
+    "compare.py",
+    "confirm_aes.py",
+    "audit.py",
+    "hashes.sha256"
+  ]
+}

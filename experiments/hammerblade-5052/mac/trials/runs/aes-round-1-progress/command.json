@@ -1,0 +1,24 @@
+{
+  "argv": [
+    "/usr/bin/time",
+    "-p",
+    "-o",
+    "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-untuned-5052-20260922/runs/aes-round-1-progress/time.txt",
+    "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-untuned-5052-20260922/models/progress/exec/simsc",
+    "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-mac-kk6-verilator-20260918/inputs/aes/main.so",
+    "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-mac-kk6-verilator-20260918/inputs/aes/main.riscv"
+  ],
+  "cwd": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-untuned-5052-20260922/runs/aes-round-1-progress",
+  "start_epoch": 1790178417.4706922,
+  "timeout_s": 900,
+  "load_start": [
+    6.052734375,
+    4.70947265625,
+    3.4892578125
+  ],
+  "environment": {
+    "DYLD_LIBRARY_PATH": null,
+    "DYLD_INSERT_LIBRARIES": null,
+    "VERILATOR_ROOT": null
+  }
+}

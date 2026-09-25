@@ -1,0 +1,28 @@
+{
+  "argv": [
+    "/usr/bin/time",
+    "-p",
+    "-o",
+    "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-untuned-5052-20260922/warmup/pr-wv-round-0-one/time.txt",
+    "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-untuned-5052-20260922/models/one/exec/simsc",
+    "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-mac-kk6-verilator-20260918/inputs/pr-wv/main.so",
+    "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-mac-kk6-verilator-20260918/inputs/pr-wv/main.riscv",
+    "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-mac-kk6-verilator-20260918/inputs/pr-wv/wiki-Vote.fwd_offsets.txt",
+    "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-mac-kk6-verilator-20260918/inputs/pr-wv/wiki-Vote.fwd_nonzeros.txt",
+    "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-mac-kk6-verilator-20260918/inputs/pr-wv/wiki-Vote.rev_offsets.txt",
+    "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-mac-kk6-verilator-20260918/inputs/pr-wv/wiki-Vote.rev_nonzeros.txt"
+  ],
+  "cwd": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-untuned-5052-20260922/warmup/pr-wv-round-0-one",
+  "start_epoch": 1790178054.291994,
+  "timeout_s": 900,
+  "load_start": [
+    2.50732421875,
+    2.44482421875,
+    2.384765625
+  ],
+  "environment": {
+    "DYLD_LIBRARY_PATH": null,
+    "DYLD_INSERT_LIBRARIES": null,
+    "VERILATOR_ROOT": null
+  }
+}

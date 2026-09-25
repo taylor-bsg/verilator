@@ -1,0 +1,17 @@
+diff --git a/libraries/platforms/bigblade-verilator/hierarchy.py b/libraries/platforms/bigblade-verilator/hierarchy.py
+index 3716a0b5..9dd5fba1 100644
+--- a/libraries/platforms/bigblade-verilator/hierarchy.py
++++ b/libraries/platforms/bigblade-verilator/hierarchy.py
+@@ -13,9 +13,9 @@ def stamp(path, mode, threads, identity):
+         raise ValueError("VERILATOR_HIERARCHY must be processor or flat")
+     if not threads.isdecimal() or int(threads) < 1:
+         raise ValueError("VERILATOR_THREADS must be a positive integer")
+-    if mode == "processor" and int(threads) != 1:
+-        raise ValueError("processor hierarchy is validated only with VERILATOR_THREADS=1; "
+-                         "use VERILATOR_HIERARCHY=flat for multithreaded experiments")
++    # Private comparison only; preserve the shared production guard unchanged.
++    if mode == "processor" and int(threads) not in (1, 5):
++        raise ValueError("task-local processor experiment admits only 1 or 5 workers")
+     content = json.dumps(dict(mode=mode, threads=int(threads), identity=identity),
+                          sort_keys=True, indent=2) + "\n"
+     if not path.exists() or path.read_text() != content:

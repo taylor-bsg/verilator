@@ -1,0 +1,275 @@
+{
+  "cases": {
+    "pr-wv": {
+      "command": [
+        "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb128-cost-20260907/infra/bsg_replicant/machines/pod_X1Y1_ruche_X16Y8_hbm_one_pseudo_channel/bigblade-verilator/exec/simsc",
+        "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-mac-kk6-verilator-20260918/inputs/pr-wv/main.so",
+        "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-mac-kk6-verilator-20260918/inputs/pr-wv/main.riscv",
+        "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-mac-kk6-verilator-20260918/inputs/pr-wv/wiki-Vote.fwd_offsets.txt",
+        "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-mac-kk6-verilator-20260918/inputs/pr-wv/wiki-Vote.fwd_nonzeros.txt",
+        "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-mac-kk6-verilator-20260918/inputs/pr-wv/wiki-Vote.rev_offsets.txt",
+        "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-mac-kk6-verilator-20260918/inputs/pr-wv/wiki-Vote.rev_nonzeros.txt"
+      ],
+      "files": [
+        {
+          "source": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-fig10-workload-sweep-20260909/hb_hammerbench/apps/pagerank/graph_wiki-Vote__pod-id_36/main.so",
+          "path": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-mac-kk6-verilator-20260918/inputs/pr-wv/main.so",
+          "sha256": "603a3703737cf83d54310c08502ee9e5440dfceaf188098cc7281d383fdcd2af",
+          "bytes": 108200
+        },
+        {
+          "source": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-fig10-workload-sweep-20260909/hb_hammerbench/apps/pagerank/graph_wiki-Vote__pod-id_36/main.riscv",
+          "path": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-mac-kk6-verilator-20260918/inputs/pr-wv/main.riscv",
+          "sha256": "2b27a1fe78ca8cacf669af540daa21c64c812861913409d85e31441e75e44e89",
+          "bytes": 31452
+        },
+        {
+          "source": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-fig10-workload-sweep-20260909/hb_hammerbench/apps/pagerank/inputs/wiki-Vote.fwd_offsets.txt",
+          "path": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-mac-kk6-verilator-20260918/inputs/pr-wv/wiki-Vote.fwd_offsets.txt",
+          "sha256": "d91940ed51530b1c2549573d989213c406ecc5bf4eb4bb22f8f4a89f65309d09",
+          "bytes": 50704
+        },
+        {
+          "source": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-fig10-workload-sweep-20260909/hb_hammerbench/apps/pagerank/inputs/wiki-Vote.fwd_nonzeros.txt",
+          "path": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-mac-kk6-verilator-20260918/inputs/pr-wv/wiki-Vote.fwd_nonzeros.txt",
+          "sha256": "f7f799812bdb9b7ceeeaf1cbad6e869f7d9451604d9c544338b1afa4d1addb55",
+          "bytes": 502836
+        },
+        {
+          "source": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-fig10-workload-sweep-20260909/hb_hammerbench/apps/pagerank/inputs/wiki-Vote.rev_offsets.txt",
+          "path": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-mac-kk6-verilator-20260918/inputs/pr-wv/wiki-Vote.rev_offsets.txt",
+          "sha256": "4c3303b9a0e18ef1d0e741201c2808c09903938f2b576f60ec038382ea89425d",
+          "bytes": 49476
+        },
+        {
+          "source": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-fig10-workload-sweep-20260909/hb_hammerbench/apps/pagerank/inputs/wiki-Vote.rev_nonzeros.txt",
+          "path": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-mac-kk6-verilator-20260918/inputs/pr-wv/wiki-Vote.rev_nonzeros.txt",
+          "sha256": "93ac8407d737fbda6324f8316384f2c5a5c86d939af8ba71e038ce34a61ce23f",
+          "bytes": 488049
+        }
+      ],
+      "expected_envelope": 14497,
+      "historical": {
+        "ordered_pairs": 128,
+        "rows": 256,
+        "first_cycle": 205449,
+        "last_cycle": 219946,
+        "envelope_cycles": 14497,
+        "summed_tile_marker_spans": 1831112,
+        "summed_hardware_tile_cycles": null,
+        "first_time_ps": 136829034,
+        "last_time_ps": 146484036,
+        "period_ps": 666
+      },
+      "historical_profile": {
+        "ordered_pairs": 128,
+        "rows": 256,
+        "first_cycle": 205449,
+        "last_cycle": 219946,
+        "envelope_cycles": 14497,
+        "summed_tile_marker_spans": 1831112,
+        "summed_hardware_tile_cycles": 1831112,
+        "first_time_ps": 136829034,
+        "last_time_ps": 146484036,
+        "period_ps": 666
+      },
+      "historical_result": {
+        "point": "pr-wv",
+        "paper_label": "PR (WV)",
+        "app": "pagerank",
+        "case": "graph_wiki-Vote__pod-id_36",
+        "variant": "exec",
+        "directory": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-fig10-workload-sweep-20260909/runs/pr-wv/exec",
+        "command": [
+          "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb128-cost-20260907/infra/bsg_replicant/machines/pod_X1Y1_ruche_X16Y8_hbm_one_pseudo_channel/bigblade-verilator/exec/simsc",
+          "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-fig10-workload-sweep-20260909/hb_hammerbench/apps/pagerank/graph_wiki-Vote__pod-id_36/main.so",
+          "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-fig10-workload-sweep-20260909/hb_hammerbench/apps/pagerank/graph_wiki-Vote__pod-id_36/main.riscv",
+          "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-fig10-workload-sweep-20260909/hb_hammerbench/apps/pagerank/inputs/wiki-Vote.fwd_offsets.txt",
+          "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-fig10-workload-sweep-20260909/hb_hammerbench/apps/pagerank/inputs/wiki-Vote.fwd_nonzeros.txt",
+          "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-fig10-workload-sweep-20260909/hb_hammerbench/apps/pagerank/inputs/wiki-Vote.rev_offsets.txt",
+          "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-fig10-workload-sweep-20260909/hb_hammerbench/apps/pagerank/inputs/wiki-Vote.rev_nonzeros.txt"
+        ],
+        "queue_weight": 12,
+        "start_utc": "2026-09-09T19:43:47.328137+00:00",
+        "active_at_start": 12,
+        "elf_sha256": "2b27a1fe78ca8cacf669af540daa21c64c812861913409d85e31441e75e44e89",
+        "host_sha256": "603a3703737cf83d54310c08502ee9e5440dfceaf188098cc7281d383fdcd2af",
+        "input_bytes": 1091065,
+        "pid": 96545,
+        "end_utc": "2026-09-09T19:46:13.809281+00:00",
+        "wall_seconds": 146.47819233299924,
+        "exit_code": 0,
+        "regression_pass_banner": true,
+        "regression_fail_banner": false,
+        "user_seconds": 144.602254,
+        "system_seconds": 0.495757,
+        "max_rss_bytes": 1135984640,
+        "minor_faults": 69711,
+        "major_faults": 1,
+        "swaps": 0,
+        "voluntary_context_switches": 0,
+        "involuntary_context_switches": 55765,
+        "log_tail": [
+          "[INFO][RX] Freezing tile t=160436070, x= 29, y= 13",
+          "[INFO][RX] Freezing tile t=160436736, x= 30, y=  9",
+          "[INFO][RX] Freezing tile t=160437402, x= 29, y= 14",
+          "[INFO][RX] Freezing tile t=160438068, x= 30, y= 10",
+          "[INFO][RX] Freezing tile t=160438734, x= 29, y= 15",
+          "[INFO][RX] Freezing tile t=160439400, x= 30, y= 11",
+          "[INFO][RX] Freezing tile t=160440732, x= 30, y= 12",
+          "[INFO][RX] Freezing tile t=160441398, x= 31, y=  8",
+          "[INFO][RX] Freezing tile t=160442064, x= 30, y= 13",
+          "[INFO][RX] Freezing tile t=160442730, x= 31, y=  9",
+          "[INFO][RX] Freezing tile t=160443396, x= 30, y= 14",
+          "[INFO][RX] Freezing tile t=160444062, x= 31, y= 10",
+          "[INFO][RX] Freezing tile t=160444728, x= 30, y= 15",
+          "[INFO][RX] Freezing tile t=160445394, x= 31, y= 11",
+          "[INFO][RX] Freezing tile t=160446726, x= 31, y= 12",
+          "[INFO][RX] Freezing tile t=160448058, x= 31, y= 13",
+          "[INFO][RX] Freezing tile t=160449390, x= 31, y= 14",
+          "[INFO][RX] Freezing tile t=160450722, x= 31, y= 15",
+          "BSG REGRESSION TEST \u001b[32mPASSED\u001b[0m",
+          "BSG REGRESSION TEST \u001b[32mPASSED\u001b[0m"
+        ],
+        "status": "pass-existing-checker"
+      }
+    },
+    "aes": {
+      "command": [
+        "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb128-cost-20260907/infra/bsg_replicant/machines/pod_X1Y1_ruche_X16Y8_hbm_one_pseudo_channel/bigblade-verilator/exec/simsc",
+        "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-mac-kk6-verilator-20260918/inputs/aes/main.so",
+        "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-mac-kk6-verilator-20260918/inputs/aes/main.riscv"
+      ],
+      "files": [
+        {
+          "source": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-fig10-workload-sweep-20260909/hb_hammerbench/apps/aes/NUM-ITER_2/main.so",
+          "path": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-mac-kk6-verilator-20260918/inputs/aes/main.so",
+          "sha256": "0bb3d842719e085afaa9bb1893e37bc47e4a1776443c522df0dbd8b40f809c41",
+          "bytes": 95928
+        },
+        {
+          "source": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-fig10-workload-sweep-20260909/hb_hammerbench/apps/aes/NUM-ITER_2/main.riscv",
+          "path": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-mac-kk6-verilator-20260918/inputs/aes/main.riscv",
+          "sha256": "d3330c08b5c2c7830bece3a8937dcddf6a2f5c27be2071bf3ddf3d60a94ddd9a",
+          "bytes": 40052
+        }
+      ],
+      "expected_envelope": 388176,
+      "historical": {
+        "ordered_pairs": 128,
+        "rows": 256,
+        "first_cycle": 280611,
+        "last_cycle": 668787,
+        "envelope_cycles": 388176,
+        "summed_tile_marker_spans": 49638787,
+        "summed_hardware_tile_cycles": null,
+        "first_time_ps": 186886926,
+        "last_time_ps": 445412142,
+        "period_ps": 666
+      },
+      "historical_profile": {
+        "ordered_pairs": 128,
+        "rows": 256,
+        "first_cycle": 280611,
+        "last_cycle": 668787,
+        "envelope_cycles": 388176,
+        "summed_tile_marker_spans": 49638787,
+        "summed_hardware_tile_cycles": 49638787,
+        "first_time_ps": 186886926,
+        "last_time_ps": 445412142,
+        "period_ps": 666
+      },
+      "historical_result": {
+        "point": "aes",
+        "paper_label": "AES",
+        "app": "aes",
+        "case": "NUM-ITER_2",
+        "variant": "exec",
+        "directory": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-fig10-workload-sweep-20260909/runs/aes/exec",
+        "command": [
+          "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb128-cost-20260907/infra/bsg_replicant/machines/pod_X1Y1_ruche_X16Y8_hbm_one_pseudo_channel/bigblade-verilator/exec/simsc",
+          "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-fig10-workload-sweep-20260909/hb_hammerbench/apps/aes/NUM-ITER_2/main.so",
+          "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-fig10-workload-sweep-20260909/hb_hammerbench/apps/aes/NUM-ITER_2/main.riscv"
+        ],
+        "queue_weight": 25,
+        "start_utc": "2026-09-09T19:14:14.860658+00:00",
+        "active_at_start": 12,
+        "elf_sha256": "d3330c08b5c2c7830bece3a8937dcddf6a2f5c27be2071bf3ddf3d60a94ddd9a",
+        "host_sha256": "0bb3d842719e085afaa9bb1893e37bc47e4a1776443c522df0dbd8b40f809c41",
+        "input_bytes": 0,
+        "pid": 94363,
+        "end_utc": "2026-09-09T19:22:00.557114+00:00",
+        "wall_seconds": 465.70523562499875,
+        "exit_code": 0,
+        "regression_pass_banner": true,
+        "regression_fail_banner": false,
+        "user_seconds": 461.97977,
+        "system_seconds": 1.2914619999999999,
+        "max_rss_bytes": 1135591424,
+        "minor_faults": 69684,
+        "major_faults": 1,
+        "swaps": 0,
+        "voluntary_context_switches": 1,
+        "involuntary_context_switches": 172221,
+        "log_tail": [
+          "[INFO][RX] Freezing tile t=481918266, x= 29, y= 13",
+          "[INFO][RX] Freezing tile t=481918932, x= 30, y=  9",
+          "[INFO][RX] Freezing tile t=481919598, x= 29, y= 14",
+          "[INFO][RX] Freezing tile t=481920264, x= 30, y= 10",
+          "[INFO][RX] Freezing tile t=481920930, x= 29, y= 15",
+          "[INFO][RX] Freezing tile t=481921596, x= 30, y= 11",
+          "[INFO][RX] Freezing tile t=481922928, x= 30, y= 12",
+          "[INFO][RX] Freezing tile t=481923594, x= 31, y=  8",
+          "[INFO][RX] Freezing tile t=481924260, x= 30, y= 13",
+          "[INFO][RX] Freezing tile t=481924926, x= 31, y=  9",
+          "[INFO][RX] Freezing tile t=481925592, x= 30, y= 14",
+          "[INFO][RX] Freezing tile t=481926258, x= 31, y= 10",
+          "[INFO][RX] Freezing tile t=481926924, x= 30, y= 15",
+          "[INFO][RX] Freezing tile t=481927590, x= 31, y= 11",
+          "[INFO][RX] Freezing tile t=481928922, x= 31, y= 12",
+          "[INFO][RX] Freezing tile t=481930254, x= 31, y= 13",
+          "[INFO][RX] Freezing tile t=481931586, x= 31, y= 14",
+          "[INFO][RX] Freezing tile t=481932918, x= 31, y= 15",
+          "BSG REGRESSION TEST \u001b[32mPASSED\u001b[0m",
+          "BSG REGRESSION TEST \u001b[32mPASSED\u001b[0m"
+        ],
+        "status": "pass-existing-checker"
+      }
+    }
+  },
+  "references": {
+    "pr-wv": {
+      "path": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-four-threads-20260920/runs/pr-wv-threads-1-1/simple_stats.csv",
+      "sha256": "b7a8863d089eae8cb9cca85285c320884008a3b8ffeb67abaebf6c1694229405",
+      "markers": {
+        "ordered_pairs": 128,
+        "rows": 256,
+        "first_cycle": 205449,
+        "last_cycle": 219946,
+        "envelope_cycles": 14497,
+        "summed_tile_marker_spans": 1831112,
+        "summed_hardware_tile_cycles": null,
+        "first_time_ps": 136839690,
+        "last_time_ps": 146494692,
+        "period_ps": 666
+      }
+    },
+    "aes": {
+      "path": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-four-threads-20260920/runs/aes-threads-1-1/simple_stats.csv",
+      "sha256": "2a82e5c2d693922d3d9b9543eed37f7ee2ab9bd7d691ec9058f99a6383ece698",
+      "markers": {
+        "ordered_pairs": 128,
+        "rows": 256,
+        "first_cycle": 280611,
+        "last_cycle": 668787,
+        "envelope_cycles": 388176,
+        "summed_tile_marker_spans": 49638787,
+        "summed_hardware_tile_cycles": null,
+        "first_time_ps": 186897582,
+        "last_time_ps": 445422798,
+        "period_ps": 666
+      }
+    }
+  },
+  "note": "Input binaries/data are not included. Mac host shared objects cannot run on Linux. Use KK6 matched-input handoff or rebuild the host component for Linux; verify device ELF/data hashes."
+}

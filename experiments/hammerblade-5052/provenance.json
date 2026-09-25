@@ -1,0 +1,30 @@
+{
+  "verilator_base": "ea338be98e1e838d3518809ce8899f85a009963c",
+  "code_commit": "cc6c3abc901e04debb32c5a2e523bdf94ecf13c4",
+  "original_patch_sha256": "7aabd45778d12dfbccd161c97c68f796f28b932bbcb477f033a48438569b497c",
+  "published_source_sha256": {
+    "bin/verilator": "a580bebb7cc1bc87efbe7870e302131ea18ae184c84764028348c6e413b27464",
+    "docs/guide/exe_verilator.rst": "22cb13adca6c7dcc6b3579cf82beaa2786ce2f3c81ea76fda4f6a353928fb74d",
+    "include/verilated_threads.h": "eedd7e9aa8f1d872b584104dce12dd389c40a505c766496e6bab49a65f539197",
+    "src/V3AstAttr.h": "2cfd2dab8bf0d4673876888d6ec49b7b86aeea659d74dfa1353fa01573358ed2",
+    "src/V3ExecGraph.cpp": "24fffe3c8160ae08f4bcb4875e8d46aea5cd2fca231a858ff122b1f046437e5d",
+    "src/V3Options.cpp": "32ee50744bc192817972467e9bbe9574e0d325dbff8603c00ccf4011931a7df5",
+    "src/V3Options.h": "ae7af40a5181a86df0e43440e130d6cdd67e8e795d0bcbc82fd844505f9604d3",
+    "test_regress/t/t_threads_progress.cpp": "7d410a084cd268670600af3cf60415ce2f6ae435522d5882381b09a046165d01",
+    "test_regress/t/t_threads_progress.py": "851829aa8f8c24b57d3ecc534b730df62e03231d0cfa9b179b74a24493ef90d1",
+    "test_regress/t/t_threads_progress.v": "603bf97d26a5a7a6ae32b1d980aa30e5f8f85a8d41a74b4724f6ca0b3338e9d8",
+    "test_regress/t/t_threads_progress_off.py": "d3aae952fd348f8222542f80a03510a12ff4a63a7ea90e0432404c53063e78e0"
+  },
+  "mac_untuned_root": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-untuned-5052-20260922",
+  "mac_untuned_manifest_sha256": "dc187173f411b8703da8526f0608dc700dc14f1610a766aafed552ecf29725ec",
+  "prototype_checks_root": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-progress-5052-20260921",
+  "prototype_checks_manifest_sha256": "3db22f25c368a4e0f9257711e3f38d8645d43bd0b1a86768af668cf5be91c309",
+  "source_pins": {
+    "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-pgo-5052-20260922/bsg_replicant": "06997a3cc8ec48243538d3b307bf1e345bdb25b5",
+    "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-progress-5052-20260921/verilator": "ea338be98e1e838d3518809ce8899f85a009963c",
+    "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-merged-5052-alignment-20260921/bsg_bladerunner-16x8": "6b33a79d2cf356a91e9b920df83037aa07c29cf6",
+    "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-merged-5052-alignment-20260921/bsg_bladerunner-16x8/bsg_manycore": "0052ce8594864befae2b85d55193706c88b14584",
+    "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-merged-5052-alignment-20260921/bsg_bladerunner-16x8/basejump_stl": "fa07b1f180d0d313e15dc828249eea07b341852b"
+  },
+  "publication": "2026-09-25; exact source transfer and existing-evidence packaging only; no new build or simulation."
+}

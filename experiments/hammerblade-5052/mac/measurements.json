@@ -1,0 +1,1241 @@
+{
+  "selection": "Initial three trials/mode PageRank; six display-awake AES confirmation trials. Original AES timings retained unchanged in summary.json, excluded due to the recorded display transition, not selected by outcome.",
+  "groups": [
+    {
+      "case": "pr-wv",
+      "mode": "one",
+      "workers": 1,
+      "trials": 3,
+      "all_valid": true,
+      "wall_seconds": [
+        25.57,
+        26.05,
+        25.96
+      ],
+      "mean_wall": 25.86,
+      "median_wall": 25.96,
+      "min_wall": 25.57,
+      "max_wall": 26.05,
+      "stdev_wall": 0.25514701644346177,
+      "mean_cpu": 25.830000000000002,
+      "speedup_vs_one": 1.0,
+      "cpu_multiplier_vs_one": 1.0
+    },
+    {
+      "case": "pr-wv",
+      "mode": "counter",
+      "workers": 5,
+      "trials": 3,
+      "all_valid": true,
+      "wall_seconds": [
+        23.41,
+        23.42,
+        23.44
+      ],
+      "mean_wall": 23.423333333333336,
+      "median_wall": 23.42,
+      "min_wall": 23.41,
+      "max_wall": 23.44,
+      "stdev_wall": 0.015275252316519916,
+      "mean_cpu": 102.84,
+      "speedup_vs_one": 1.1040273231820121,
+      "cpu_multiplier_vs_one": 3.981416957026713
+    },
+    {
+      "case": "pr-wv",
+      "mode": "progress",
+      "workers": 5,
+      "trials": 3,
+      "all_valid": true,
+      "wall_seconds": [
+        23.04,
+        23.3,
+        23.05
+      ],
+      "mean_wall": 23.13,
+      "median_wall": 23.05,
+      "min_wall": 23.04,
+      "max_wall": 23.3,
+      "stdev_wall": 0.14730919862656283,
+      "mean_cpu": 101.22666666666666,
+      "speedup_vs_one": 1.1180285343709468,
+      "cpu_multiplier_vs_one": 3.9189572848109426
+    },
+    {
+      "case": "aes",
+      "mode": "one",
+      "workers": 1,
+      "trials": 2,
+      "all_valid": true,
+      "wall_seconds": [
+        75.21,
+        75.07
+      ],
+      "mean_wall": 75.13999999999999,
+      "median_wall": 75.13999999999999,
+      "min_wall": 75.07,
+      "max_wall": 75.21,
+      "stdev_wall": 0.09899494936611705,
+      "mean_cpu": 75.08000000000001,
+      "speedup_vs_one": 1.0,
+      "cpu_multiplier_vs_one": 1.0
+    },
+    {
+      "case": "aes",
+      "mode": "counter",
+      "workers": 5,
+      "trials": 2,
+      "all_valid": true,
+      "wall_seconds": [
+        67.63,
+        66.81
+      ],
+      "mean_wall": 67.22,
+      "median_wall": 67.22,
+      "min_wall": 66.81,
+      "max_wall": 67.63,
+      "stdev_wall": 0.5798275605729641,
+      "mean_cpu": 296.02,
+      "speedup_vs_one": 1.117822076762868,
+      "cpu_multiplier_vs_one": 3.942727757059136
+    },
+    {
+      "case": "aes",
+      "mode": "progress",
+      "workers": 5,
+      "trials": 2,
+      "all_valid": true,
+      "wall_seconds": [
+        65.99,
+        66.11
+      ],
+      "mean_wall": 66.05,
+      "median_wall": 66.05,
+      "min_wall": 65.99,
+      "max_wall": 66.11,
+      "stdev_wall": 0.08485281374238891,
+      "mean_cpu": 290.085,
+      "speedup_vs_one": 1.1376230128690386,
+      "cpu_multiplier_vs_one": 3.8636787426744794
+    }
+  ],
+  "comparisons": [
+    {
+      "case": "pr-wv",
+      "progress_speedup_vs_counter": 1.0126819426430322,
+      "progress_wall_reduction_percent": 1.2523125088942821
+    },
+    {
+      "case": "aes",
+      "progress_speedup_vs_counter": 1.0177138531415595,
+      "progress_wall_reduction_percent": 1.740553406724188
+    }
+  ],
+  "records": [
+    {
+      "case": "aes",
+      "trial": 1,
+      "mode": "counter",
+      "workers": 5,
+      "progress": false,
+      "warmup": false,
+      "time_seconds": {
+        "real": 67.63,
+        "user": 289.25,
+        "sys": 8.52
+      },
+      "correctness": true,
+      "markers": {
+        "ordered_pairs": 128,
+        "rows": 256,
+        "first_cycle": 280611,
+        "last_cycle": 668787,
+        "envelope_cycles": 388176,
+        "summed_tile_marker_spans": 49638787,
+        "summed_hardware_tile_cycles": null,
+        "first_time_ps": 186897582,
+        "last_time_ps": 445422798,
+        "period_ps": 666
+      },
+      "markers_identical": true,
+      "valid": true,
+      "simulator_sha256": "d8384978a391eaaa75b71f04cc187d884bfed2d02d97724d43fc1994a63bffee",
+      "raw_hashes": {
+        "command-result.json": "4fd9beebd5b74e9e23e1adffa5593e543ae0af7a50bb5771b96f3c0e7fddc2b4",
+        "output.log": "afb8a72c2ac10f1408ed1709d7738059b4cef126962d14d4d1ce7d11b4b24fc6",
+        "time.txt": "349ed565046fa1d01d9987f3a224fcb1394e5b10f4b1b4b6114f95d66c0a863a",
+        "command.json": "ab9952b4366f07380ea53d894eeff35a262bead01f4396d22a14ef5fe71e78bf",
+        "pid.json": "9826a922b07e35a691bf3fc1b361937fc252c6a3fa230b3e38bba08e1286977f",
+        "simple_stats.csv": "2a82e5c2d693922d3d9b9543eed37f7ee2ab9bd7d691ec9058f99a6383ece698"
+      },
+      "start_epoch": 1790184367.62202,
+      "end_epoch": 1790184435.291682,
+      "primary": true,
+      "original_cwd": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-untuned-5052-20260922/confirmation/runs/aes-round-1-counter",
+      "published_trial": "mac/trials/confirmation/runs/aes-round-1-counter",
+      "validation_excerpt": [
+        "BSG REGRESSION TEST PASSED",
+        "BSG REGRESSION TEST PASSED"
+      ]
+    },
+    {
+      "case": "aes",
+      "trial": 1,
+      "mode": "one",
+      "workers": 1,
+      "progress": false,
+      "warmup": false,
+      "time_seconds": {
+        "real": 75.21,
+        "user": 74.97,
+        "sys": 0.18
+      },
+      "correctness": true,
+      "markers": {
+        "ordered_pairs": 128,
+        "rows": 256,
+        "first_cycle": 280611,
+        "last_cycle": 668787,
+        "envelope_cycles": 388176,
+        "summed_tile_marker_spans": 49638787,
+        "summed_hardware_tile_cycles": null,
+        "first_time_ps": 186897582,
+        "last_time_ps": 445422798,
+        "period_ps": 666
+      },
+      "markers_identical": true,
+      "valid": true,
+      "simulator_sha256": "6c221dfb4f305df00b1596583a5347e205b497544aa0f6b2eed146d5b50bcf47",
+      "raw_hashes": {
+        "command-result.json": "ab4cc5fd2edfb9f130fbec559fa6189466a1548ecea4a7b29d7af4023e711a71",
+        "output.log": "afb8a72c2ac10f1408ed1709d7738059b4cef126962d14d4d1ce7d11b4b24fc6",
+        "time.txt": "8c579ddf5f99bd0a2b78123c95bbc9993f5baa912ffac7c1efef75fe5a31d4f5",
+        "command.json": "1d2b2d31cb30c55dfdccdb0a0a27ad041b0e4f84ffe1c99d9844c5fefe09f361",
+        "pid.json": "b7b0ef94e150e3d3dd1902a059de6be8d2561fe9f537a5fe7c53223be4d5484e",
+        "simple_stats.csv": "2a82e5c2d693922d3d9b9543eed37f7ee2ab9bd7d691ec9058f99a6383ece698"
+      },
+      "start_epoch": 1790184501.536622,
+      "end_epoch": 1790184576.7714958,
+      "primary": true,
+      "original_cwd": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-untuned-5052-20260922/confirmation/runs/aes-round-1-one",
+      "published_trial": "mac/trials/confirmation/runs/aes-round-1-one",
+      "validation_excerpt": [
+        "BSG REGRESSION TEST PASSED",
+        "BSG REGRESSION TEST PASSED"
+      ]
+    },
+    {
+      "case": "aes",
+      "trial": 1,
+      "mode": "progress",
+      "workers": 5,
+      "progress": true,
+      "warmup": false,
+      "time_seconds": {
+        "real": 65.99,
+        "user": 281.95,
+        "sys": 7.96
+      },
+      "correctness": true,
+      "markers": {
+        "ordered_pairs": 128,
+        "rows": 256,
+        "first_cycle": 280611,
+        "last_cycle": 668787,
+        "envelope_cycles": 388176,
+        "summed_tile_marker_spans": 49638787,
+        "summed_hardware_tile_cycles": null,
+        "first_time_ps": 186897582,
+        "last_time_ps": 445422798,
+        "period_ps": 666
+      },
+      "markers_identical": true,
+      "valid": true,
+      "simulator_sha256": "cc82c4e255fe8781fd11815d17d948a71bd70d776fe9f671f2923a81d0e1217f",
+      "raw_hashes": {
+        "command-result.json": "c8de171abeaa328976cff5a5386fe6da4742f73e162fe8f7b33fb6799853f46c",
+        "output.log": "afb8a72c2ac10f1408ed1709d7738059b4cef126962d14d4d1ce7d11b4b24fc6",
+        "time.txt": "45b97e0c5e90f7ba6906b2c97a80718f232d80626412e616c0675c52f5663aa3",
+        "command.json": "c0e2b1862ac61bb1fb3c8fe6008970134d920b91b765ea400e2bcf5c30fda17f",
+        "pid.json": "2355a754e2703a64d0f624d89570ee1f6e82d4aa35df3944f6162b97f991989f",
+        "simple_stats.csv": "2a82e5c2d693922d3d9b9543eed37f7ee2ab9bd7d691ec9058f99a6383ece698"
+      },
+      "start_epoch": 1790184435.409066,
+      "end_epoch": 1790184501.415099,
+      "primary": true,
+      "original_cwd": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-untuned-5052-20260922/confirmation/runs/aes-round-1-progress",
+      "published_trial": "mac/trials/confirmation/runs/aes-round-1-progress",
+      "validation_excerpt": [
+        "BSG REGRESSION TEST PASSED",
+        "BSG REGRESSION TEST PASSED"
+      ]
+    },
+    {
+      "case": "aes",
+      "trial": 2,
+      "mode": "counter",
+      "workers": 5,
+      "progress": false,
+      "warmup": false,
+      "time_seconds": {
+        "real": 66.81,
+        "user": 285.99,
+        "sys": 8.28
+      },
+      "correctness": true,
+      "markers": {
+        "ordered_pairs": 128,
+        "rows": 256,
+        "first_cycle": 280611,
+        "last_cycle": 668787,
+        "envelope_cycles": 388176,
+        "summed_tile_marker_spans": 49638787,
+        "summed_hardware_tile_cycles": null,
+        "first_time_ps": 186897582,
+        "last_time_ps": 445422798,
+        "period_ps": 666
+      },
+      "markers_identical": true,
+      "valid": true,
+      "simulator_sha256": "d8384978a391eaaa75b71f04cc187d884bfed2d02d97724d43fc1994a63bffee",
+      "raw_hashes": {
+        "command-result.json": "287906cfcd0617dfc8139d78dbf10f6ddb915c6e2723d8d6dd6e29b1aaca7e60",
+        "output.log": "afb8a72c2ac10f1408ed1709d7738059b4cef126962d14d4d1ce7d11b4b24fc6",
+        "time.txt": "7373800f9bb10b82a0098939039d7085d894e2d970a1207fc6e49677396646e6",
+        "command.json": "489ce050f1a1789c82bbfcaf37204c9cc090fe5ae781cad11eb2c5a21cee9c6b",
+        "pid.json": "2d043cc8805af96ba9868e45567fa2552bc66be95b2b7ec51a7229ecac5037e1",
+        "simple_stats.csv": "2a82e5c2d693922d3d9b9543eed37f7ee2ab9bd7d691ec9058f99a6383ece698"
+      },
+      "start_epoch": 1790184718.326926,
+      "end_epoch": 1790184785.158179,
+      "primary": true,
+      "original_cwd": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-untuned-5052-20260922/confirmation/runs/aes-round-2-counter",
+      "published_trial": "mac/trials/confirmation/runs/aes-round-2-counter",
+      "validation_excerpt": [
+        "BSG REGRESSION TEST PASSED",
+        "BSG REGRESSION TEST PASSED"
+      ]
+    },
+    {
+      "case": "aes",
+      "trial": 2,
+      "mode": "one",
+      "workers": 1,
+      "progress": false,
+      "warmup": false,
+      "time_seconds": {
+        "real": 75.07,
+        "user": 74.81,
+        "sys": 0.2
+      },
+      "correctness": true,
+      "markers": {
+        "ordered_pairs": 128,
+        "rows": 256,
+        "first_cycle": 280611,
+        "last_cycle": 668787,
+        "envelope_cycles": 388176,
+        "summed_tile_marker_spans": 49638787,
+        "summed_hardware_tile_cycles": null,
+        "first_time_ps": 186897582,
+        "last_time_ps": 445422798,
+        "period_ps": 666
+      },
+      "markers_identical": true,
+      "valid": true,
+      "simulator_sha256": "6c221dfb4f305df00b1596583a5347e205b497544aa0f6b2eed146d5b50bcf47",
+      "raw_hashes": {
+        "command-result.json": "e24f832d7e063d0a1151d2696622e3b4709336259bc58026c3c4ee28a04f4e17",
+        "output.log": "afb8a72c2ac10f1408ed1709d7738059b4cef126962d14d4d1ce7d11b4b24fc6",
+        "time.txt": "3723eafb487c29250ac8484d559b6b14373e489fad87a5ae625051b65becc126",
+        "command.json": "eeabe024b83a9ed6d0ac0e4953dfa26e465df6c2730767e17a9e7dc665afe3be",
+        "pid.json": "e11a16556e01bef05668a5cd78ba7b79765ed0ac5da2f388a347a08a1dc492c0",
+        "simple_stats.csv": "2a82e5c2d693922d3d9b9543eed37f7ee2ab9bd7d691ec9058f99a6383ece698"
+      },
+      "start_epoch": 1790184576.8861172,
+      "end_epoch": 1790184651.969353,
+      "primary": true,
+      "original_cwd": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-untuned-5052-20260922/confirmation/runs/aes-round-2-one",
+      "published_trial": "mac/trials/confirmation/runs/aes-round-2-one",
+      "validation_excerpt": [
+        "BSG REGRESSION TEST PASSED",
+        "BSG REGRESSION TEST PASSED"
+      ]
+    },
+    {
+      "case": "aes",
+      "trial": 2,
+      "mode": "progress",
+      "workers": 5,
+      "progress": true,
+      "warmup": false,
+      "time_seconds": {
+        "real": 66.11,
+        "user": 282.37,
+        "sys": 7.89
+      },
+      "correctness": true,
+      "markers": {
+        "ordered_pairs": 128,
+        "rows": 256,
+        "first_cycle": 280611,
+        "last_cycle": 668787,
+        "envelope_cycles": 388176,
+        "summed_tile_marker_spans": 49638787,
+        "summed_hardware_tile_cycles": null,
+        "first_time_ps": 186897582,
+        "last_time_ps": 445422798,
+        "period_ps": 666
+      },
+      "markers_identical": true,
+      "valid": true,
+      "simulator_sha256": "cc82c4e255fe8781fd11815d17d948a71bd70d776fe9f671f2923a81d0e1217f",
+      "raw_hashes": {
+        "command-result.json": "6893e665537cc55a78acf2cbb2ea0d60c931fa466470f96e5afcda473db93642",
+        "output.log": "afb8a72c2ac10f1408ed1709d7738059b4cef126962d14d4d1ce7d11b4b24fc6",
+        "time.txt": "e092d104e53f0c8ec53a48bb4299c9da2e8b2837cd10c786dceac81b8375a6be",
+        "command.json": "c67ce2b3e9a13eb1435c1082f3d23793209a34b9de9ddef07032852aa7d325bc",
+        "pid.json": "7d17ecd75f5e8412958f5f36a87d7b50a462193c453e1f19f684a691cf013f5e",
+        "simple_stats.csv": "2a82e5c2d693922d3d9b9543eed37f7ee2ab9bd7d691ec9058f99a6383ece698"
+      },
+      "start_epoch": 1790184652.0844312,
+      "end_epoch": 1790184718.20844,
+      "primary": true,
+      "original_cwd": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-untuned-5052-20260922/confirmation/runs/aes-round-2-progress",
+      "published_trial": "mac/trials/confirmation/runs/aes-round-2-progress",
+      "validation_excerpt": [
+        "BSG REGRESSION TEST PASSED",
+        "BSG REGRESSION TEST PASSED"
+      ]
+    },
+    {
+      "case": "aes",
+      "trial": 1,
+      "mode": "counter",
+      "workers": 5,
+      "progress": false,
+      "warmup": false,
+      "time_seconds": {
+        "real": 69.37,
+        "user": 293.51,
+        "sys": 10.67
+      },
+      "correctness": true,
+      "markers": {
+        "ordered_pairs": 128,
+        "rows": 256,
+        "first_cycle": 280611,
+        "last_cycle": 668787,
+        "envelope_cycles": 388176,
+        "summed_tile_marker_spans": 49638787,
+        "summed_hardware_tile_cycles": null,
+        "first_time_ps": 186897582,
+        "last_time_ps": 445422798,
+        "period_ps": 666
+      },
+      "markers_identical": true,
+      "valid": true,
+      "simulator_sha256": "d8384978a391eaaa75b71f04cc187d884bfed2d02d97724d43fc1994a63bffee",
+      "raw_hashes": {
+        "command-result.json": "d2297b6f1d024c9bc67c98a59bb2c94e66b08d8cec57a50142a6509b970d7322",
+        "output.log": "afb8a72c2ac10f1408ed1709d7738059b4cef126962d14d4d1ce7d11b4b24fc6",
+        "time.txt": "04ccdc7eac9bc424b3683da7ca2f9f9f2a5e4c52cbd9e1a78d49292d97d54e20",
+        "command.json": "8ac95c46e041a7b9dd7a18b35875310a2358b2a919d8882c6bbea5101a99b4a0",
+        "pid.json": "604bdffb45d9e3cae10187b2e400da5e68742d63c23efe8148d489c8ec81d21a",
+        "simple_stats.csv": "2a82e5c2d693922d3d9b9543eed37f7ee2ab9bd7d691ec9058f99a6383ece698"
+      },
+      "start_epoch": 1790178347.900723,
+      "end_epoch": 1790178417.3362958,
+      "primary": false,
+      "original_cwd": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-untuned-5052-20260922/runs/aes-round-1-counter",
+      "published_trial": "mac/trials/runs/aes-round-1-counter",
+      "validation_excerpt": [
+        "BSG REGRESSION TEST PASSED",
+        "BSG REGRESSION TEST PASSED"
+      ]
+    },
+    {
+      "case": "aes",
+      "trial": 1,
+      "mode": "one",
+      "workers": 1,
+      "progress": false,
+      "warmup": false,
+      "time_seconds": {
+        "real": 78.48,
+        "user": 77.4,
+        "sys": 1.01
+      },
+      "correctness": true,
+      "markers": {
+        "ordered_pairs": 128,
+        "rows": 256,
+        "first_cycle": 280611,
+        "last_cycle": 668787,
+        "envelope_cycles": 388176,
+        "summed_tile_marker_spans": 49638787,
+        "summed_hardware_tile_cycles": null,
+        "first_time_ps": 186897582,
+        "last_time_ps": 445422798,
+        "period_ps": 666
+      },
+      "markers_identical": true,
+      "valid": true,
+      "simulator_sha256": "6c221dfb4f305df00b1596583a5347e205b497544aa0f6b2eed146d5b50bcf47",
+      "raw_hashes": {
+        "command-result.json": "f4296a7e5ced6b617eebdc98c9192aa4eda5ccbec603336faee79a67830b43f3",
+        "output.log": "afb8a72c2ac10f1408ed1709d7738059b4cef126962d14d4d1ce7d11b4b24fc6",
+        "time.txt": "adfbfc01099285a70fbd33b2c08711a8e39d2191b5790eedd77556566f41f5ee",
+        "command.json": "0a742fc352c2b0c0adc45c9857830f588cb33b7ac23e35e5d527edfb98ea9036",
+        "pid.json": "828f197a0aedbafb8a6e073a263cabdbdf0185878a6d70af807cc763171de355",
+        "simple_stats.csv": "2a82e5c2d693922d3d9b9543eed37f7ee2ab9bd7d691ec9058f99a6383ece698"
+      },
+      "start_epoch": 1790178486.388232,
+      "end_epoch": 1790178564.895854,
+      "primary": false,
+      "original_cwd": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-untuned-5052-20260922/runs/aes-round-1-one",
+      "published_trial": "mac/trials/runs/aes-round-1-one",
+      "validation_excerpt": [
+        "BSG REGRESSION TEST PASSED",
+        "BSG REGRESSION TEST PASSED"
+      ]
+    },
+    {
+      "case": "aes",
+      "trial": 1,
+      "mode": "progress",
+      "workers": 5,
+      "progress": true,
+      "warmup": false,
+      "time_seconds": {
+        "real": 68.75,
+        "user": 290.34,
+        "sys": 10.21
+      },
+      "correctness": true,
+      "markers": {
+        "ordered_pairs": 128,
+        "rows": 256,
+        "first_cycle": 280611,
+        "last_cycle": 668787,
+        "envelope_cycles": 388176,
+        "summed_tile_marker_spans": 49638787,
+        "summed_hardware_tile_cycles": null,
+        "first_time_ps": 186897582,
+        "last_time_ps": 445422798,
+        "period_ps": 666
+      },
+      "markers_identical": true,
+      "valid": true,
+      "simulator_sha256": "cc82c4e255fe8781fd11815d17d948a71bd70d776fe9f671f2923a81d0e1217f",
+      "raw_hashes": {
+        "command-result.json": "5568888949cf8e669ebb4b6679abaf0c57d1d70bd7c535b1ca45e9b66a6c1e62",
+        "output.log": "afb8a72c2ac10f1408ed1709d7738059b4cef126962d14d4d1ce7d11b4b24fc6",
+        "time.txt": "47a903e2c3c153f559c81a571c8a2a993277032e4b7f33369eebee00ff37925d",
+        "command.json": "04e0c4bc6de5bdb2234d4794339e09c6ca2f787dea78b70a71c8dce28fed0362",
+        "pid.json": "dd0e79ec0522beea160c3d657d7c1406829878c27560373d735b2910abdf509e",
+        "simple_stats.csv": "2a82e5c2d693922d3d9b9543eed37f7ee2ab9bd7d691ec9058f99a6383ece698"
+      },
+      "start_epoch": 1790178417.4706922,
+      "end_epoch": 1790178486.25942,
+      "primary": false,
+      "original_cwd": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-untuned-5052-20260922/runs/aes-round-1-progress",
+      "published_trial": "mac/trials/runs/aes-round-1-progress",
+      "validation_excerpt": [
+        "BSG REGRESSION TEST PASSED",
+        "BSG REGRESSION TEST PASSED"
+      ]
+    },
+    {
+      "case": "aes",
+      "trial": 2,
+      "mode": "counter",
+      "workers": 5,
+      "progress": false,
+      "warmup": false,
+      "time_seconds": {
+        "real": 68.47,
+        "user": 291.51,
+        "sys": 9.1
+      },
+      "correctness": true,
+      "markers": {
+        "ordered_pairs": 128,
+        "rows": 256,
+        "first_cycle": 280611,
+        "last_cycle": 668787,
+        "envelope_cycles": 388176,
+        "summed_tile_marker_spans": 49638787,
+        "summed_hardware_tile_cycles": null,
+        "first_time_ps": 186897582,
+        "last_time_ps": 445422798,
+        "period_ps": 666
+      },
+      "markers_identical": true,
+      "valid": true,
+      "simulator_sha256": "d8384978a391eaaa75b71f04cc187d884bfed2d02d97724d43fc1994a63bffee",
+      "raw_hashes": {
+        "command-result.json": "c2e0bd8727ee51125a69a6251e4ea4fc6f3737b0f95a87706190cfeae726c72d",
+        "output.log": "afb8a72c2ac10f1408ed1709d7738059b4cef126962d14d4d1ce7d11b4b24fc6",
+        "time.txt": "ebf6cb6b89d60c70dabeffd85cbcbea53dbfb8aab72d668915e98807d7b0bd28",
+        "command.json": "f95937d2c2e4dd488990f1b2e26f7196c26480888ddb80d75509e8ad05a75b81",
+        "pid.json": "a6bd773028e826da13a216cb9e20dced28b063aa70d4415a0c7b7bfff4c92f90",
+        "simple_stats.csv": "2a82e5c2d693922d3d9b9543eed37f7ee2ab9bd7d691ec9058f99a6383ece698"
+      },
+      "start_epoch": 1790178710.802541,
+      "end_epoch": 1790178779.2954931,
+      "primary": false,
+      "original_cwd": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-untuned-5052-20260922/runs/aes-round-2-counter",
+      "published_trial": "mac/trials/runs/aes-round-2-counter",
+      "validation_excerpt": [
+        "BSG REGRESSION TEST PASSED",
+        "BSG REGRESSION TEST PASSED"
+      ]
+    },
+    {
+      "case": "aes",
+      "trial": 2,
+      "mode": "one",
+      "workers": 1,
+      "progress": false,
+      "warmup": false,
+      "time_seconds": {
+        "real": 77.8,
+        "user": 76.73,
+        "sys": 1.0
+      },
+      "correctness": true,
+      "markers": {
+        "ordered_pairs": 128,
+        "rows": 256,
+        "first_cycle": 280611,
+        "last_cycle": 668787,
+        "envelope_cycles": 388176,
+        "summed_tile_marker_spans": 49638787,
+        "summed_hardware_tile_cycles": null,
+        "first_time_ps": 186897582,
+        "last_time_ps": 445422798,
+        "period_ps": 666
+      },
+      "markers_identical": true,
+      "valid": true,
+      "simulator_sha256": "6c221dfb4f305df00b1596583a5347e205b497544aa0f6b2eed146d5b50bcf47",
+      "raw_hashes": {
+        "command-result.json": "ffd944e6b28afafb84a59e8dc4d2dcba1bf8b91fdfd355e6447811b4f46e2138",
+        "output.log": "afb8a72c2ac10f1408ed1709d7738059b4cef126962d14d4d1ce7d11b4b24fc6",
+        "time.txt": "4f297e3dd08ff912634d3cb3879d1075f360ab7362fee4ff703be2e9c03d0a23",
+        "command.json": "c063ae62283d9a83fa5a26a3549a622c23bdfb1fb0270edb447657e90e39aff3",
+        "pid.json": "295aef6d1b0da0015038670d05cb035ea61a6d2ead5165a16a92c55a1b0fcf9c",
+        "simple_stats.csv": "2a82e5c2d693922d3d9b9543eed37f7ee2ab9bd7d691ec9058f99a6383ece698"
+      },
+      "start_epoch": 1790178565.0206358,
+      "end_epoch": 1790178642.8790588,
+      "primary": false,
+      "original_cwd": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-untuned-5052-20260922/runs/aes-round-2-one",
+      "published_trial": "mac/trials/runs/aes-round-2-one",
+      "validation_excerpt": [
+        "BSG REGRESSION TEST PASSED",
+        "BSG REGRESSION TEST PASSED"
+      ]
+    },
+    {
+      "case": "aes",
+      "trial": 2,
+      "mode": "progress",
+      "workers": 5,
+      "progress": true,
+      "warmup": false,
+      "time_seconds": {
+        "real": 67.63,
+        "user": 286.95,
+        "sys": 8.91
+      },
+      "correctness": true,
+      "markers": {
+        "ordered_pairs": 128,
+        "rows": 256,
+        "first_cycle": 280611,
+        "last_cycle": 668787,
+        "envelope_cycles": 388176,
+        "summed_tile_marker_spans": 49638787,
+        "summed_hardware_tile_cycles": null,
+        "first_time_ps": 186897582,
+        "last_time_ps": 445422798,
+        "period_ps": 666
+      },
+      "markers_identical": true,
+      "valid": true,
+      "simulator_sha256": "cc82c4e255fe8781fd11815d17d948a71bd70d776fe9f671f2923a81d0e1217f",
+      "raw_hashes": {
+        "command-result.json": "b6d3d862840845f42c17da23470c068084cda07d332401b4cf2e4cd15b263f6c",
+        "output.log": "afb8a72c2ac10f1408ed1709d7738059b4cef126962d14d4d1ce7d11b4b24fc6",
+        "time.txt": "f0eb6813c1a9eba25ef7727d9ab2056e33000670d5b1ba4cba1c4b3c2c1b6ee3",
+        "command.json": "1a9cac337c33ca9771404c17fcaf27af6f6209bc6e04a9dab4b7defe7b9f4a97",
+        "pid.json": "5cbcc07ddae7926bb3a77e2ccaadce4d10ea383149915c5bab657c5df454b17b",
+        "simple_stats.csv": "2a82e5c2d693922d3d9b9543eed37f7ee2ab9bd7d691ec9058f99a6383ece698"
+      },
+      "start_epoch": 1790178643.0089831,
+      "end_epoch": 1790178710.679042,
+      "primary": false,
+      "original_cwd": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-untuned-5052-20260922/runs/aes-round-2-progress",
+      "published_trial": "mac/trials/runs/aes-round-2-progress",
+      "validation_excerpt": [
+        "BSG REGRESSION TEST PASSED",
+        "BSG REGRESSION TEST PASSED"
+      ]
+    },
+    {
+      "case": "pr-wv",
+      "trial": 1,
+      "mode": "counter",
+      "workers": 5,
+      "progress": false,
+      "warmup": false,
+      "time_seconds": {
+        "real": 23.41,
+        "user": 99.11,
+        "sys": 3.69
+      },
+      "correctness": true,
+      "markers": {
+        "ordered_pairs": 128,
+        "rows": 256,
+        "first_cycle": 205449,
+        "last_cycle": 219946,
+        "envelope_cycles": 14497,
+        "summed_tile_marker_spans": 1831112,
+        "summed_hardware_tile_cycles": null,
+        "first_time_ps": 136839690,
+        "last_time_ps": 146494692,
+        "period_ps": 666
+      },
+      "markers_identical": true,
+      "valid": true,
+      "simulator_sha256": "d8384978a391eaaa75b71f04cc187d884bfed2d02d97724d43fc1994a63bffee",
+      "raw_hashes": {
+        "command-result.json": "f5382d195d56bdc65f6b10a4e90774a56ed9e089c7ec6979ea4086c1f859b2b9",
+        "output.log": "887fd0f88b5b4786d9aca02364c75b9e4deaaf8609743110366eb68338fcdf45",
+        "time.txt": "03d7c2b8743a82141f3c7ffcd94dfeccf548223c5b916b503143c81a131e8295",
+        "command.json": "87e9dbd99903ae24d9dfe9328ae219a7619b7b0ae08e4dd2fbe9f99532b36aa0",
+        "pid.json": "517c5861fb30eb3cd125f0ab3b135a6024dfd5bab07e275d9903edb4f37efbb0",
+        "simple_stats.csv": "b7a8863d089eae8cb9cca85285c320884008a3b8ffeb67abaebf6c1694229405"
+      },
+      "start_epoch": 1790178154.886348,
+      "end_epoch": 1790178178.3327749,
+      "primary": true,
+      "original_cwd": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-untuned-5052-20260922/runs/pr-wv-round-1-counter",
+      "published_trial": "mac/trials/runs/pr-wv-round-1-counter",
+      "validation_excerpt": [
+        "BSG REGRESSION TEST PASSED",
+        "BSG REGRESSION TEST PASSED"
+      ]
+    },
+    {
+      "case": "pr-wv",
+      "trial": 1,
+      "mode": "one",
+      "workers": 1,
+      "progress": false,
+      "warmup": false,
+      "time_seconds": {
+        "real": 25.57,
+        "user": 25.17,
+        "sys": 0.37
+      },
+      "correctness": true,
+      "markers": {
+        "ordered_pairs": 128,
+        "rows": 256,
+        "first_cycle": 205449,
+        "last_cycle": 219946,
+        "envelope_cycles": 14497,
+        "summed_tile_marker_spans": 1831112,
+        "summed_hardware_tile_cycles": null,
+        "first_time_ps": 136839690,
+        "last_time_ps": 146494692,
+        "period_ps": 666
+      },
+      "markers_identical": true,
+      "valid": true,
+      "simulator_sha256": "6c221dfb4f305df00b1596583a5347e205b497544aa0f6b2eed146d5b50bcf47",
+      "raw_hashes": {
+        "command-result.json": "dfafc666a45fde4ce3ea037f6282cf89e781c0f434fcbae88daea1892e05b0ab",
+        "output.log": "887fd0f88b5b4786d9aca02364c75b9e4deaaf8609743110366eb68338fcdf45",
+        "time.txt": "2a935a49521936fbac3af63bbf25d9d7db8b594c2526c89a742f70eeda5a56f5",
+        "command.json": "1128db1b6e704c3a17b89a7fb7b76684a722a7ab5aa6b2e71c074ef6c532d0c3",
+        "pid.json": "0610596229938630f0c98ca947f8a97ecaadc46133899f81f924bfb766d433dd",
+        "simple_stats.csv": "b7a8863d089eae8cb9cca85285c320884008a3b8ffeb67abaebf6c1694229405"
+      },
+      "start_epoch": 1790178129.1740491,
+      "end_epoch": 1790178154.7597451,
+      "primary": true,
+      "original_cwd": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-untuned-5052-20260922/runs/pr-wv-round-1-one",
+      "published_trial": "mac/trials/runs/pr-wv-round-1-one",
+      "validation_excerpt": [
+        "BSG REGRESSION TEST PASSED",
+        "BSG REGRESSION TEST PASSED"
+      ]
+    },
+    {
+      "case": "pr-wv",
+      "trial": 1,
+      "mode": "progress",
+      "workers": 5,
+      "progress": true,
+      "warmup": false,
+      "time_seconds": {
+        "real": 23.04,
+        "user": 97.49,
+        "sys": 3.45
+      },
+      "correctness": true,
+      "markers": {
+        "ordered_pairs": 128,
+        "rows": 256,
+        "first_cycle": 205449,
+        "last_cycle": 219946,
+        "envelope_cycles": 14497,
+        "summed_tile_marker_spans": 1831112,
+        "summed_hardware_tile_cycles": null,
+        "first_time_ps": 136839690,
+        "last_time_ps": 146494692,
+        "period_ps": 666
+      },
+      "markers_identical": true,
+      "valid": true,
+      "simulator_sha256": "cc82c4e255fe8781fd11815d17d948a71bd70d776fe9f671f2923a81d0e1217f",
+      "raw_hashes": {
+        "command-result.json": "6405e225a3c772b733a9c1163e4e3b6896d41e9d66500a4763adba771e2b43fb",
+        "output.log": "887fd0f88b5b4786d9aca02364c75b9e4deaaf8609743110366eb68338fcdf45",
+        "time.txt": "6fcf8701f84ff7d7db7802ac621cf87efd83d3244a7bdfcc783422ecd30620ac",
+        "command.json": "c1e56b263f1a419b9a5ae249244bab8ba4c7bdc6adaf93cc78677c442aca68b3",
+        "pid.json": "108b45928c5aecd3370927b79bf9d8af8250ff14d5b3a4607488b34cc930dddd",
+        "simple_stats.csv": "b7a8863d089eae8cb9cca85285c320884008a3b8ffeb67abaebf6c1694229405"
+      },
+      "start_epoch": 1790178178.462215,
+      "end_epoch": 1790178201.5593998,
+      "primary": true,
+      "original_cwd": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-untuned-5052-20260922/runs/pr-wv-round-1-progress",
+      "published_trial": "mac/trials/runs/pr-wv-round-1-progress",
+      "validation_excerpt": [
+        "BSG REGRESSION TEST PASSED",
+        "BSG REGRESSION TEST PASSED"
+      ]
+    },
+    {
+      "case": "pr-wv",
+      "trial": 2,
+      "mode": "counter",
+      "workers": 5,
+      "progress": false,
+      "warmup": false,
+      "time_seconds": {
+        "real": 23.42,
+        "user": 99.15,
+        "sys": 3.71
+      },
+      "correctness": true,
+      "markers": {
+        "ordered_pairs": 128,
+        "rows": 256,
+        "first_cycle": 205449,
+        "last_cycle": 219946,
+        "envelope_cycles": 14497,
+        "summed_tile_marker_spans": 1831112,
+        "summed_hardware_tile_cycles": null,
+        "first_time_ps": 136839690,
+        "last_time_ps": 146494692,
+        "period_ps": 666
+      },
+      "markers_identical": true,
+      "valid": true,
+      "simulator_sha256": "d8384978a391eaaa75b71f04cc187d884bfed2d02d97724d43fc1994a63bffee",
+      "raw_hashes": {
+        "command-result.json": "7c2023f00ae4165d48b9916c740763089bb14826011d33ac38e60c17b124779e",
+        "output.log": "887fd0f88b5b4786d9aca02364c75b9e4deaaf8609743110366eb68338fcdf45",
+        "time.txt": "3dc9b45a2a17f50ea9cae72daf885ee891759e49d59f9ef996ea693e5d59dd06",
+        "command.json": "e2bd5934ad7fc12b5a5ea38411087d48b672b7fee87f66efa93c5a49f560acbc",
+        "pid.json": "c110a65d2321fdf3edef088e456751781b83e19980b9c8493813a3aabc4c6d5b",
+        "simple_stats.csv": "b7a8863d089eae8cb9cca85285c320884008a3b8ffeb67abaebf6c1694229405"
+      },
+      "start_epoch": 1790178201.6933491,
+      "end_epoch": 1790178225.121072,
+      "primary": true,
+      "original_cwd": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-untuned-5052-20260922/runs/pr-wv-round-2-counter",
+      "published_trial": "mac/trials/runs/pr-wv-round-2-counter",
+      "validation_excerpt": [
+        "BSG REGRESSION TEST PASSED",
+        "BSG REGRESSION TEST PASSED"
+      ]
+    },
+    {
+      "case": "pr-wv",
+      "trial": 2,
+      "mode": "one",
+      "workers": 1,
+      "progress": false,
+      "warmup": false,
+      "time_seconds": {
+        "real": 26.05,
+        "user": 25.64,
+        "sys": 0.38
+      },
+      "correctness": true,
+      "markers": {
+        "ordered_pairs": 128,
+        "rows": 256,
+        "first_cycle": 205449,
+        "last_cycle": 219946,
+        "envelope_cycles": 14497,
+        "summed_tile_marker_spans": 1831112,
+        "summed_hardware_tile_cycles": null,
+        "first_time_ps": 136839690,
+        "last_time_ps": 146494692,
+        "period_ps": 666
+      },
+      "markers_identical": true,
+      "valid": true,
+      "simulator_sha256": "6c221dfb4f305df00b1596583a5347e205b497544aa0f6b2eed146d5b50bcf47",
+      "raw_hashes": {
+        "command-result.json": "28f9f5fc729fb937736cda4c9ee30755c9f711ed2c7b67549cc877b58fd7be77",
+        "output.log": "887fd0f88b5b4786d9aca02364c75b9e4deaaf8609743110366eb68338fcdf45",
+        "time.txt": "0b7bb99cb8defd22dfe13f4b93d862214d9d2fea1d00bb5675519a9a87693c23",
+        "command.json": "53d13f37e810fa571671d90d0194d9a1080ac399d337413359a8135484c3cd90",
+        "pid.json": "bca88a9bf3f9b345ee90e5694b0cccd09ca1251b229aacc790ac30fa052ac13f",
+        "simple_stats.csv": "b7a8863d089eae8cb9cca85285c320884008a3b8ffeb67abaebf6c1694229405"
+      },
+      "start_epoch": 1790178248.721938,
+      "end_epoch": 1790178274.802772,
+      "primary": true,
+      "original_cwd": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-untuned-5052-20260922/runs/pr-wv-round-2-one",
+      "published_trial": "mac/trials/runs/pr-wv-round-2-one",
+      "validation_excerpt": [
+        "BSG REGRESSION TEST PASSED",
+        "BSG REGRESSION TEST PASSED"
+      ]
+    },
+    {
+      "case": "pr-wv",
+      "trial": 2,
+      "mode": "progress",
+      "workers": 5,
+      "progress": true,
+      "warmup": false,
+      "time_seconds": {
+        "real": 23.3,
+        "user": 98.25,
+        "sys": 3.55
+      },
+      "correctness": true,
+      "markers": {
+        "ordered_pairs": 128,
+        "rows": 256,
+        "first_cycle": 205449,
+        "last_cycle": 219946,
+        "envelope_cycles": 14497,
+        "summed_tile_marker_spans": 1831112,
+        "summed_hardware_tile_cycles": null,
+        "first_time_ps": 136839690,
+        "last_time_ps": 146494692,
+        "period_ps": 666
+      },
+      "markers_identical": true,
+      "valid": true,
+      "simulator_sha256": "cc82c4e255fe8781fd11815d17d948a71bd70d776fe9f671f2923a81d0e1217f",
+      "raw_hashes": {
+        "command-result.json": "3078c5fe3c8ac9bea334fa38d42c4f4dc2e393d9e542ce1d3affc439348c0bed",
+        "output.log": "887fd0f88b5b4786d9aca02364c75b9e4deaaf8609743110366eb68338fcdf45",
+        "time.txt": "92ed2d0c843fbeb6dc39812158b65069a22f9db09a5f99f75559d4789eb6039b",
+        "command.json": "327049a0ad3906cdab7acb8e40e19fff651847fff48572665bf7a21aad725ab5",
+        "pid.json": "05d70b57ecc413b51cda0dbde4e428c22f6deb28b74b03902b0c9200d47d9b3e",
+        "simple_stats.csv": "b7a8863d089eae8cb9cca85285c320884008a3b8ffeb67abaebf6c1694229405"
+      },
+      "start_epoch": 1790178225.252116,
+      "end_epoch": 1790178248.589237,
+      "primary": true,
+      "original_cwd": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-untuned-5052-20260922/runs/pr-wv-round-2-progress",
+      "published_trial": "mac/trials/runs/pr-wv-round-2-progress",
+      "validation_excerpt": [
+        "BSG REGRESSION TEST PASSED",
+        "BSG REGRESSION TEST PASSED"
+      ]
+    },
+    {
+      "case": "pr-wv",
+      "trial": 3,
+      "mode": "counter",
+      "workers": 5,
+      "progress": false,
+      "warmup": false,
+      "time_seconds": {
+        "real": 23.44,
+        "user": 99.17,
+        "sys": 3.69
+      },
+      "correctness": true,
+      "markers": {
+        "ordered_pairs": 128,
+        "rows": 256,
+        "first_cycle": 205449,
+        "last_cycle": 219946,
+        "envelope_cycles": 14497,
+        "summed_tile_marker_spans": 1831112,
+        "summed_hardware_tile_cycles": null,
+        "first_time_ps": 136839690,
+        "last_time_ps": 146494692,
+        "period_ps": 666
+      },
+      "markers_identical": true,
+      "valid": true,
+      "simulator_sha256": "d8384978a391eaaa75b71f04cc187d884bfed2d02d97724d43fc1994a63bffee",
+      "raw_hashes": {
+        "command-result.json": "b84df8f8c61ea391fbadc9fcee4faffe0cb8e783c8e975d11e50919eb1cfcde8",
+        "output.log": "887fd0f88b5b4786d9aca02364c75b9e4deaaf8609743110366eb68338fcdf45",
+        "time.txt": "ed12ff024725c54ec657a628f008372c3e488df164cad55def8c632040934330",
+        "command.json": "56b9be91bd295ae6a19197d14ccd83600137630bfb2ecb5e301f2c8eeb1ed730",
+        "pid.json": "0ed245f061f188e7ace228a428c1633ae18d2e5aea7d8c3823ade89a417a470f",
+        "simple_stats.csv": "b7a8863d089eae8cb9cca85285c320884008a3b8ffeb67abaebf6c1694229405"
+      },
+      "start_epoch": 1790178324.299223,
+      "end_epoch": 1790178347.768097,
+      "primary": true,
+      "original_cwd": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-untuned-5052-20260922/runs/pr-wv-round-3-counter",
+      "published_trial": "mac/trials/runs/pr-wv-round-3-counter",
+      "validation_excerpt": [
+        "BSG REGRESSION TEST PASSED",
+        "BSG REGRESSION TEST PASSED"
+      ]
+    },
+    {
+      "case": "pr-wv",
+      "trial": 3,
+      "mode": "one",
+      "workers": 1,
+      "progress": false,
+      "warmup": false,
+      "time_seconds": {
+        "real": 25.96,
+        "user": 25.56,
+        "sys": 0.37
+      },
+      "correctness": true,
+      "markers": {
+        "ordered_pairs": 128,
+        "rows": 256,
+        "first_cycle": 205449,
+        "last_cycle": 219946,
+        "envelope_cycles": 14497,
+        "summed_tile_marker_spans": 1831112,
+        "summed_hardware_tile_cycles": null,
+        "first_time_ps": 136839690,
+        "last_time_ps": 146494692,
+        "period_ps": 666
+      },
+      "markers_identical": true,
+      "valid": true,
+      "simulator_sha256": "6c221dfb4f305df00b1596583a5347e205b497544aa0f6b2eed146d5b50bcf47",
+      "raw_hashes": {
+        "command-result.json": "ca18df52736e55c6782525b53ddf5260f1aced71d6d94823133caf386acbdaa8",
+        "output.log": "887fd0f88b5b4786d9aca02364c75b9e4deaaf8609743110366eb68338fcdf45",
+        "time.txt": "bf77c06404a8fda8f5814f79ae5fe4ad554086288fbc470228488b074a026c8f",
+        "command.json": "2e6805a6c456cd4caf5a0f262a43f0848189c2662aa1ab19ee0e197ffc950b4d",
+        "pid.json": "52168cd10e44683bc7a89d361bee27e5df046c74a3d6c043807ed20447d9fb65",
+        "simple_stats.csv": "b7a8863d089eae8cb9cca85285c320884008a3b8ffeb67abaebf6c1694229405"
+      },
+      "start_epoch": 1790178298.153437,
+      "end_epoch": 1790178324.167517,
+      "primary": true,
+      "original_cwd": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-untuned-5052-20260922/runs/pr-wv-round-3-one",
+      "published_trial": "mac/trials/runs/pr-wv-round-3-one",
+      "validation_excerpt": [
+        "BSG REGRESSION TEST PASSED",
+        "BSG REGRESSION TEST PASSED"
+      ]
+    },
+    {
+      "case": "pr-wv",
+      "trial": 3,
+      "mode": "progress",
+      "workers": 5,
+      "progress": true,
+      "warmup": false,
+      "time_seconds": {
+        "real": 23.05,
+        "user": 97.45,
+        "sys": 3.49
+      },
+      "correctness": true,
+      "markers": {
+        "ordered_pairs": 128,
+        "rows": 256,
+        "first_cycle": 205449,
+        "last_cycle": 219946,
+        "envelope_cycles": 14497,
+        "summed_tile_marker_spans": 1831112,
+        "summed_hardware_tile_cycles": null,
+        "first_time_ps": 136839690,
+        "last_time_ps": 146494692,
+        "period_ps": 666
+      },
+      "markers_identical": true,
+      "valid": true,
+      "simulator_sha256": "cc82c4e255fe8781fd11815d17d948a71bd70d776fe9f671f2923a81d0e1217f",
+      "raw_hashes": {
+        "command-result.json": "3d424c8f461057ea6b4b7633f9476b4255003e517fb35bc6d421989b696db8e5",
+        "output.log": "887fd0f88b5b4786d9aca02364c75b9e4deaaf8609743110366eb68338fcdf45",
+        "time.txt": "646581cd66332d7eb16c97930d1d43966f34c29f11108e171739c78e4cfadf00",
+        "command.json": "e2f435d9c777de397a1c3857f600e9ba5cff8b0ad287f2af2586d1e68c90fb6c",
+        "pid.json": "a4989280fb77c3636cfbd026c395dc943a8a288b436aac30a7cd1940e0fb2298",
+        "simple_stats.csv": "b7a8863d089eae8cb9cca85285c320884008a3b8ffeb67abaebf6c1694229405"
+      },
+      "start_epoch": 1790178274.9329169,
+      "end_epoch": 1790178298.021217,
+      "primary": true,
+      "original_cwd": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-untuned-5052-20260922/runs/pr-wv-round-3-progress",
+      "published_trial": "mac/trials/runs/pr-wv-round-3-progress",
+      "validation_excerpt": [
+        "BSG REGRESSION TEST PASSED",
+        "BSG REGRESSION TEST PASSED"
+      ]
+    },
+    {
+      "case": "pr-wv",
+      "trial": 0,
+      "mode": "counter",
+      "workers": 5,
+      "progress": false,
+      "warmup": true,
+      "time_seconds": {
+        "real": 23.99,
+        "user": 99.83,
+        "sys": 3.77
+      },
+      "correctness": true,
+      "markers": {
+        "ordered_pairs": 128,
+        "rows": 256,
+        "first_cycle": 205449,
+        "last_cycle": 219946,
+        "envelope_cycles": 14497,
+        "summed_tile_marker_spans": 1831112,
+        "summed_hardware_tile_cycles": null,
+        "first_time_ps": 136839690,
+        "last_time_ps": 146494692,
+        "period_ps": 666
+      },
+      "markers_identical": true,
+      "valid": true,
+      "simulator_sha256": "d8384978a391eaaa75b71f04cc187d884bfed2d02d97724d43fc1994a63bffee",
+      "raw_hashes": {
+        "command-result.json": "dbce410caf95948bd1efa3d78bb219cfdad6fe1120cacdb827e5906975881517",
+        "output.log": "887fd0f88b5b4786d9aca02364c75b9e4deaaf8609743110366eb68338fcdf45",
+        "time.txt": "b2555d7c376e3468518f07057830d4f7677fe4b4cd1da21c00d52845afda8ebd",
+        "command.json": "5ee5a1cff4575137ad563fc0f1edd5fbe05520a5a15083d78115200ce028e9aa",
+        "pid.json": "ab9ee2dbb3763fb63e266a9d354c1d30cad028a93655d3243f3f1ea7242ceded",
+        "simple_stats.csv": "b7a8863d089eae8cb9cca85285c320884008a3b8ffeb67abaebf6c1694229405"
+      },
+      "start_epoch": 1790178081.4678211,
+      "end_epoch": 1790178105.467675,
+      "primary": false,
+      "original_cwd": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-untuned-5052-20260922/warmup/pr-wv-round-0-counter",
+      "published_trial": "mac/trials/warmup/pr-wv-round-0-counter",
+      "validation_excerpt": [
+        "BSG REGRESSION TEST PASSED",
+        "BSG REGRESSION TEST PASSED"
+      ]
+    },
+    {
+      "case": "pr-wv",
+      "trial": 0,
+      "mode": "one",
+      "workers": 1,
+      "progress": false,
+      "warmup": true,
+      "time_seconds": {
+        "real": 27.03,
+        "user": 24.76,
+        "sys": 0.38
+      },
+      "correctness": true,
+      "markers": {
+        "ordered_pairs": 128,
+        "rows": 256,
+        "first_cycle": 205449,
+        "last_cycle": 219946,
+        "envelope_cycles": 14497,
+        "summed_tile_marker_spans": 1831112,
+        "summed_hardware_tile_cycles": null,
+        "first_time_ps": 136839690,
+        "last_time_ps": 146494692,
+        "period_ps": 666
+      },
+      "markers_identical": true,
+      "valid": true,
+      "simulator_sha256": "6c221dfb4f305df00b1596583a5347e205b497544aa0f6b2eed146d5b50bcf47",
+      "raw_hashes": {
+        "command-result.json": "08523976bdf67eb82368a02e3f8b0ce3d02c660f28b7b71d1bde937d4709782a",
+        "output.log": "887fd0f88b5b4786d9aca02364c75b9e4deaaf8609743110366eb68338fcdf45",
+        "time.txt": "39d83f3c46b97dfb9d351b9d8f92fc7c613a49b8448968470406de64efce7513",
+        "command.json": "b39c37acc5bec33085b5bf3c957e85af2476490258e31a0892ef8231d24d9ccb",
+        "pid.json": "41e0209027ea6107918a99715eab3c890a238d1a44e7e31b0d45cbaada610427",
+        "simple_stats.csv": "b7a8863d089eae8cb9cca85285c320884008a3b8ffeb67abaebf6c1694229405"
+      },
+      "start_epoch": 1790178054.291994,
+      "end_epoch": 1790178081.3361201,
+      "primary": false,
+      "original_cwd": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-untuned-5052-20260922/warmup/pr-wv-round-0-one",
+      "published_trial": "mac/trials/warmup/pr-wv-round-0-one",
+      "validation_excerpt": [
+        "BSG REGRESSION TEST PASSED",
+        "BSG REGRESSION TEST PASSED"
+      ]
+    },
+    {
+      "case": "pr-wv",
+      "trial": 0,
+      "mode": "progress",
+      "workers": 5,
+      "progress": true,
+      "warmup": true,
+      "time_seconds": {
+        "real": 23.43,
+        "user": 97.54,
+        "sys": 3.5
+      },
+      "correctness": true,
+      "markers": {
+        "ordered_pairs": 128,
+        "rows": 256,
+        "first_cycle": 205449,
+        "last_cycle": 219946,
+        "envelope_cycles": 14497,
+        "summed_tile_marker_spans": 1831112,
+        "summed_hardware_tile_cycles": null,
+        "first_time_ps": 136839690,
+        "last_time_ps": 146494692,
+        "period_ps": 666
+      },
+      "markers_identical": true,
+      "valid": true,
+      "simulator_sha256": "cc82c4e255fe8781fd11815d17d948a71bd70d776fe9f671f2923a81d0e1217f",
+      "raw_hashes": {
+        "command-result.json": "c878184db380d206ab55b988f76c7a27900211a4b220acc6bd2a09adea36b790",
+        "output.log": "887fd0f88b5b4786d9aca02364c75b9e4deaaf8609743110366eb68338fcdf45",
+        "time.txt": "09a1d4d8c4ca8b7579637aab019a30b0f5cdcdc7b89f5c7c4b90bbf3d7edd885",
+        "command.json": "d4f9f00d972be887e0fd4449e6d0a9c9642fe21c7e13d0b538a637793cfb7a94",
+        "pid.json": "2fcce9ebc1ff2d918be7e77affe5600e290d799e570cb042d8c840fd5a118bd6",
+        "simple_stats.csv": "b7a8863d089eae8cb9cca85285c320884008a3b8ffeb67abaebf6c1694229405"
+      },
+      "start_epoch": 1790178105.596822,
+      "end_epoch": 1790178129.045828,
+      "primary": false,
+      "original_cwd": "/Users/pai/Documents/HammerBlade_Mac/task_handbook_runs/hb-verilator-untuned-5052-20260922/warmup/pr-wv-round-0-progress",
+      "published_trial": "mac/trials/warmup/pr-wv-round-0-progress",
+      "validation_excerpt": [
+        "BSG REGRESSION TEST PASSED",
+        "BSG REGRESSION TEST PASSED"
+      ]
+    }
+  ],
+  "note": "Selected time/marker/command records copied exactly; full stdout and host process snapshots remain in the sealed Mac bundle. Stdout hashes and correctness excerpts are retained, not represented as full logs."
+}
