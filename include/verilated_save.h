@@ -28,6 +28,8 @@
 
 #include <string>
 
+class VlMTaskProgress;
+
 //=============================================================================
 // VerilatedSerialize
 /// Class for writing serialization of structures to a stream representation.
@@ -246,6 +248,14 @@ public:
 };
 
 //=============================================================================
+
+// Progress counters describe only the current evaluation, just like MTask dependency counts.
+// Save/restore runs between evaluations. Leave these counters paired with the live schedule's
+// epoch, which is also not restored, rather than persisting stale synchronization state.
+inline VerilatedSerialize& operator<<(VerilatedSerialize& os, const VlMTaskProgress&) {
+    return os;
+}
+inline VerilatedDeserialize& operator>>(VerilatedDeserialize& os, VlMTaskProgress&) { return os; }
 
 inline VerilatedSerialize& operator<<(VerilatedSerialize& os, const uint64_t& rhs) {
     return os.write(&rhs, sizeof(rhs));

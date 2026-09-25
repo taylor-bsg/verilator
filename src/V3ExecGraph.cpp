@@ -27,7 +27,10 @@
 #include "V3Os.h"
 #include "V3Stats.h"
 
+#include <limits>
+#include <map>
 #include <memory>
+#include <set>
 #include <unordered_map>
 #include <vector>
 
@@ -899,8 +902,111 @@ void finalizeCosts(V3Graph* execMTaskGraphp) {
     }
 }
 
+// Lower cross-thread edges to single-writer progress publications after scheduling.
+// Within a producer lane, only the last predecessor of each destination is needed:
+// its release publication covers every earlier predecessor's writes. Each graph's
+// existing final join prevents epoch lapping. Storage belongs to the model and
+// schedule, including separately generated hierarchical models.
+class ProgressSchedule final {
+    const ThreadSchedule& m_schedule;
+    std::map<const ExecMTask*, uint32_t> m_ordinals;
+    std::map<const ExecMTask*, std::map<uint32_t, uint32_t>> m_waits;
+    std::set<const ExecMTask*> m_publications;
+    std::vector<AstVar*> m_varps;
+
+    void addCall(AstCFunc* funcp, uint32_t threadId, uint32_t ordinal, VCMethod method) const {
+        FileLine* const flp = funcp->fileline();
+        AstVarRef* const refp = new AstVarRef{flp, m_varps.at(threadId), VAccess::READWRITE};
+        refp->selfPointer(VSelfPointerText{
+            VSelfPointerText::VlSyms{}, v3Global.rootp()->topScopep()->scopep()->nameDotless()});
+        AstCMethodHard* const callp = new AstCMethodHard{
+            flp, refp, method, new AstCExpr{flp, AstCExpr::Pure{}, "even_cycle", 1}};
+        callp->addPinsp(new AstConst{flp, ordinal});
+        callp->dtypeSetVoid();
+        funcp->addStmtsp(callp->makeStmt());
+    }
+
+public:
+    ProgressSchedule(const ThreadSchedule& schedule, const string& tag)
+        : m_schedule{schedule}
+        , m_varps{schedule.m_threads.size(), nullptr} {
+        AstNodeModule* const modp = v3Global.rootp()->topModulep();
+        FileLine* const flp = modp->fileline();
+        for (const std::vector<const ExecMTask*>& thread : schedule.m_threads) {
+            UASSERT_OBJ(thread.size() <= std::numeric_limits<uint32_t>::max(), modp,
+                        "Thread task ordinal exceeds runtime representation");
+            uint32_t ordinal = 0;
+            for (const ExecMTask* const mtaskp : thread) m_ordinals.emplace(mtaskp, ++ordinal);
+        }
+        uint64_t originalEdges = 0;
+        uint64_t progressWaits = 0;
+        for (const std::vector<const ExecMTask*>& thread : schedule.m_threads) {
+            for (const ExecMTask* const mtaskp : thread) {
+                std::map<uint32_t, uint32_t>& waits = m_waits[mtaskp];
+                for (const V3GraphEdge& edge : mtaskp->inEdges()) {
+                    const ExecMTask* const prevp = edge.fromp()->as<ExecMTask>();
+                    if (!schedule.contains(prevp)
+                        || schedule.threadId(prevp) == schedule.threadId(mtaskp))
+                        continue;
+                    ++originalEdges;
+                    const uint32_t producer = schedule.threadId(prevp);
+                    waits[producer] = std::max(waits[producer], m_ordinals.at(prevp));
+                }
+                for (const auto& wait : waits) {
+                    m_publications.emplace(schedule.m_threads[wait.first][wait.second - 1]);
+                    ++progressWaits;
+                }
+            }
+        }
+        AstCDType* const dtypep = new AstCDType{flp, "VlMTaskProgress"};
+        v3Global.rootp()->typeTablep()->addTypesp(dtypep);
+        for (const std::vector<const ExecMTask*>& thread : schedule.m_threads) {
+            for (const ExecMTask* const mtaskp : thread) {
+                if (!m_publications.count(mtaskp)) continue;
+                const uint32_t threadId = schedule.threadId(mtaskp);
+                if (m_varps[threadId]) continue;
+                AstVar* const varp = new AstVar{flp, VVarType::MODULETEMP,
+                                                "__Vm_mtaskprogress__s" + cvtToStr(schedule.id())
+                                                    + tag + "__t" + cvtToStr(threadId),
+                                                dtypep};
+                varp->isInternal(true);
+                modp->addStmtsp(varp);
+                m_varps[threadId] = varp;
+            }
+        }
+        V3Stats::addStatSum("Optimizations, Thread progress replaced notifications",
+                            originalEdges);
+        V3Stats::addStatSum("Optimizations, Thread progress waits", progressWaits);
+        V3Stats::addStatSum("Optimizations, Thread progress publications", m_publications.size());
+    }
+
+    void addWaits(AstCFunc* funcp, const ExecMTask* mtaskp) const {
+        const std::map<uint32_t, uint32_t>& waits = m_waits.at(mtaskp);
+        if (waits.empty()) return;
+        if (v3Global.opt.profExec()) {
+            funcp->addStmtsp(
+                new AstCStmt{funcp->fileline(),
+                             "VL_EXEC_TRACE_ADD_RECORD(vlSymsp).threadScheduleWaitBegin();"});
+        }
+        for (const auto& wait : waits) {
+            addCall(funcp, wait.first, wait.second, VCMethod::THREAD_PROGRESS_WAIT);
+        }
+        if (v3Global.opt.profExec()) {
+            funcp->addStmtsp(new AstCStmt{
+                funcp->fileline(), "VL_EXEC_TRACE_ADD_RECORD(vlSymsp).threadScheduleWaitEnd();"});
+        }
+    }
+
+    void addPublication(AstCFunc* funcp, const ExecMTask* mtaskp) const {
+        if (m_publications.count(mtaskp)) {
+            addCall(funcp, m_schedule.threadId(mtaskp), m_ordinals.at(mtaskp),
+                    VCMethod::THREAD_PROGRESS_PUBLISH);
+        }
+    }
+};
+
 void addMTaskToFunction(const ThreadSchedule& schedule, const uint32_t threadId, AstCFunc* funcp,
-                        const ExecMTask* mtaskp) {
+                        const ExecMTask* mtaskp, const ProgressSchedule* progressp) {
     AstScope* const scopep = v3Global.rootp()->topScopep()->scopep();
     AstNodeModule* const modp = v3Global.rootp()->topModulep();
     FileLine* const fl = modp->fileline();
@@ -910,7 +1016,9 @@ void addMTaskToFunction(const ThreadSchedule& schedule, const uint32_t threadId,
         funcp->addStmtsp(new AstCStmt{fl, stmt});
     };
 
-    if (const uint32_t nDependencies = schedule.crossThreadDependencies(mtaskp)) {
+    if (progressp) {
+        progressp->addWaits(funcp, mtaskp);
+    } else if (const uint32_t nDependencies = schedule.crossThreadDependencies(mtaskp)) {
         // This mtask has dependencies executed on another thread, so it may block. Create the task
         // state variable and wait to be notified.
         const string name = "__Vm_mtaskstate_" + cvtToStr(mtaskp->id());
@@ -947,6 +1055,10 @@ void addMTaskToFunction(const ThreadSchedule& schedule, const uint32_t threadId,
         addCStmt("vlSymsp->_vm_pgoProfiler.stopCounter(" + std::to_string(mtaskp->id()) + ");");
     }
 
+    if (progressp) {
+        progressp->addPublication(funcp, mtaskp);
+        return;
+    }
     // For any dependent mtask that's on another thread, signal one dependency completion.
     for (const V3GraphEdge& edge : mtaskp->outEdges()) {
         const ExecMTask* const nextp = edge.top()->as<ExecMTask>();
@@ -963,6 +1075,8 @@ const std::vector<AstCFunc*> createThreadFunctions(const ThreadSchedule& schedul
     FileLine* const fl = modp->fileline();
 
     std::vector<AstCFunc*> funcps;
+    const std::unique_ptr<ProgressSchedule> progressp{
+        v3Global.opt.threadsProgress() ? new ProgressSchedule{schedule, tag} : nullptr};
 
     // For each thread, create a function representing its entry point
     for (const std::vector<const ExecMTask*>& thread : schedule.m_threads) {
@@ -984,7 +1098,7 @@ const std::vector<AstCFunc*> createThreadFunctions(const ThreadSchedule& schedul
 
         // Invoke each mtask scheduled to this thread from the thread function
         for (const ExecMTask* const mtaskp : thread) {
-            addMTaskToFunction(schedule, threadId, funcp, mtaskp);
+            addMTaskToFunction(schedule, threadId, funcp, mtaskp, progressp.get());
         }
 
         // Unblock the fake "final" mtask when this thread is finished

@@ -1861,6 +1861,14 @@ Summary:
    mtasks the model is to be partitioned into. If unspecified, Verilator
    approximates a good value.
 
+.. option:: --threads-progress
+
+   For internal use only. Use experimental single-writer task progress instead
+   of per-task dependency counters for multithreaded execution. This changes
+   synchronization, not task partitioning or placement. Progress state is local
+   to each model and execution schedule. The existing final schedule join is
+   retained. The default is :code:`--no-threads-progress`.
+
 .. option:: --timescale <timeunit>/<timeprecision>
 
    Sets default timeunit and timeprecision when "`timescale" does not occur

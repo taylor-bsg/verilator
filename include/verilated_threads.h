@@ -124,6 +124,45 @@ public:
     }
 };
 
+/// Single-producer progress within one model's statically scheduled execution graph.
+/// A final graph join must prevent a producer from advancing two epochs ahead of a waiter.
+class alignas(VL_CACHE_LINE_BYTES) VlMTaskProgress final {
+    static constexpr uint64_t EPOCH_MASK = uint64_t{1} << 63;
+    std::atomic<uint64_t> m_progress{0};
+    // Separate producer words even on hosts with 128-byte cache lines, while retaining
+    // the alignment supported by Verilator's C++14 model allocation.
+    uint8_t m_padding[2 * VL_CACHE_LINE_BYTES - sizeof(std::atomic<uint64_t>)] VL_ATTR_UNUSED;
+
+public:
+    // cppcheck-suppress uninitMemberVar // m_padding is unused cache-line spacing.
+    VlMTaskProgress() = default;
+    VL_UNCOPYABLE(VlMTaskProgress);
+
+    /// Publish completion of this lane's nonzero, monotonically increasing task ordinal.
+    void publish(bool evenCycle, uint32_t ordinal) VL_MT_SAFE {
+        assert(ordinal != 0);
+        m_progress.store((evenCycle ? EPOCH_MASK : 0) | ordinal, std::memory_order_release);
+    }
+
+    /// Acquire all work through the requested ordinal in the current graph epoch.
+    void wait(bool evenCycle, uint32_t ordinal) const VL_MT_SAFE {
+        const uint64_t epoch = evenCycle ? EPOCH_MASK : 0;
+        unsigned spins = 0;
+        while (true) {
+            const uint64_t observed = m_progress.load(std::memory_order_acquire);
+            if (VL_LIKELY((observed & EPOCH_MASK) == epoch
+                          && static_cast<uint32_t>(observed) >= ordinal)) {
+                return;
+            }
+            VL_CPU_RELAX();
+            if (VL_UNLIKELY(++spins > VL_LOCK_SPINS)) {
+                spins = 0;
+                VlMTaskVertex::yieldThread();
+            }
+        }
+    }
+};
+
 class VlWorkerThread final {
     friend class VlThreadPool;
 
