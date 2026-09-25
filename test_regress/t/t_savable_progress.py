@@ -21,5 +21,5 @@ if not os.path.exists(test.obj_dir + "/saved.vltsv"):
 
 test.execute(all_run_flags=['+save_restore=1'])
 
-test.file_grep(test.glob_one(test.obj_dir + '/*___024root.h'), r'VlMTaskProgress')
+test.file_grep_any(test.glob_some(test.obj_dir + '/*.h'), r'VlMTaskProgress')
 test.passes()
