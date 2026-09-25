@@ -9,9 +9,10 @@
 import vltest_bootstrap
 
 test.scenarios('vltmt')
-test.compile(make_top_shell=False, make_main=False, threads=2,
-             verilator_flags2=['--cc --threads-progress --exe',
-                               't/t_threads_progress.cpp'])
+test.compile(make_top_shell=False,
+             make_main=False,
+             threads=2,
+             verilator_flags2=['--cc --threads-progress --exe', 't/t_threads_progress.cpp'])
 test.execute()
 test.file_grep(test.stats, r'Optimizations, Thread progress publications\s+(\d+)', 1)
 test.file_grep(test.stats, r'Optimizations, Thread progress replaced notifications\s+(\d+)', 4)

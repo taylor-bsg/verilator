@@ -10,8 +10,9 @@ import vltest_bootstrap
 
 test.scenarios('vltmt')
 test.top_filename = 't/t_threads_progress.v'
-test.compile(make_top_shell=False, make_main=False, threads=2,
-             verilator_flags2=['--cc --no-threads-progress --exe',
-                               't/t_threads_progress.cpp'])
+test.compile(make_top_shell=False,
+             make_main=False,
+             threads=2,
+             verilator_flags2=['--cc --no-threads-progress --exe', 't/t_threads_progress.cpp'])
 test.execute()
 test.passes()

@@ -945,7 +945,8 @@ public:
                 for (const V3GraphEdge& edge : mtaskp->inEdges()) {
                     const ExecMTask* const prevp = edge.fromp()->as<ExecMTask>();
                     if (!schedule.contains(prevp)
-                        || schedule.threadId(prevp) == schedule.threadId(mtaskp)) continue;
+                        || schedule.threadId(prevp) == schedule.threadId(mtaskp))
+                        continue;
                     ++originalEdges;
                     const uint32_t producer = schedule.threadId(prevp);
                     waits[producer] = std::max(waits[producer], m_ordinals.at(prevp));
@@ -963,16 +964,17 @@ public:
                 if (!m_publications.count(mtaskp)) continue;
                 const uint32_t threadId = schedule.threadId(mtaskp);
                 if (m_varps[threadId]) continue;
-                AstVar* const varp = new AstVar{
-                    flp, VVarType::MODULETEMP,
-                    "__Vm_mtaskprogress__s" + cvtToStr(schedule.id()) + tag + "__t"
-                        + cvtToStr(threadId), dtypep};
+                AstVar* const varp = new AstVar{flp, VVarType::MODULETEMP,
+                                                "__Vm_mtaskprogress__s" + cvtToStr(schedule.id())
+                                                    + tag + "__t" + cvtToStr(threadId),
+                                                dtypep};
                 varp->isInternal(true);
                 modp->addStmtsp(varp);
                 m_varps[threadId] = varp;
             }
         }
-        V3Stats::addStatSum("Optimizations, Thread progress replaced notifications", originalEdges);
+        V3Stats::addStatSum("Optimizations, Thread progress replaced notifications",
+                            originalEdges);
         V3Stats::addStatSum("Optimizations, Thread progress waits", progressWaits);
         V3Stats::addStatSum("Optimizations, Thread progress publications", m_publications.size());
     }
@@ -981,15 +983,16 @@ public:
         const std::map<uint32_t, uint32_t>& waits = m_waits.at(mtaskp);
         if (waits.empty()) return;
         if (v3Global.opt.profExec()) {
-            funcp->addStmtsp(new AstCStmt{funcp->fileline(),
-                "VL_EXEC_TRACE_ADD_RECORD(vlSymsp).threadScheduleWaitBegin();"});
+            funcp->addStmtsp(
+                new AstCStmt{funcp->fileline(),
+                             "VL_EXEC_TRACE_ADD_RECORD(vlSymsp).threadScheduleWaitBegin();"});
         }
         for (const auto& wait : waits) {
             addCall(funcp, wait.first, wait.second, VCMethod::THREAD_PROGRESS_WAIT);
         }
         if (v3Global.opt.profExec()) {
-            funcp->addStmtsp(new AstCStmt{funcp->fileline(),
-                "VL_EXEC_TRACE_ADD_RECORD(vlSymsp).threadScheduleWaitEnd();"});
+            funcp->addStmtsp(new AstCStmt{
+                funcp->fileline(), "VL_EXEC_TRACE_ADD_RECORD(vlSymsp).threadScheduleWaitEnd();"});
         }
     }
 

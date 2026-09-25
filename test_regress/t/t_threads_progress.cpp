@@ -5,13 +5,13 @@
 #include "verilated.h"
 #include "verilated_threads.h"
 
+#include "TestCheck.h"
+
 #include <array>
 #include <atomic>
 #include <memory>
 #include <mutex>
 #include <thread>
-
-#include "TestCheck.h"
 #include VM_PREFIX_INCLUDE
 
 int errors = 0;
@@ -48,9 +48,7 @@ bool checkProgress() {
 
 uint32_t mix(uint32_t a, uint32_t b) {
     uint32_t x = a ^ b;
-    for (uint32_t j = 0; j < 24; ++j) {
-        x = ((x << 5) | (x >> 27)) * 0x9e3779b9U + b + j;
-    }
+    for (uint32_t j = 0; j < 24; ++j) { x = ((x << 5) | (x >> 27)) * 0x9e3779b9U + b + j; }
     return x;
 }
 
