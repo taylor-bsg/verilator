@@ -89,8 +89,9 @@ class ProtectVisitor final : public VNVisitor {
         createCppFile(fl);
 
         // Field layout depends on the thread schedule, including PGO costs.
-        // Keep the exported interface in source port order so layout changes
-        // do not invalidate the parent model's task hashes during PGO.
+        // Keep the exported interface independent of layout so PGO does not change parent
+        // task hashes. Sort by source pin number, then name. Generated ports without a
+        // source pin number have pinNum() == 0 and precede the source-declared ports.
         std::vector<AstVar*> portps;
         for (AstNode* stmtp = nodep->stmtsp(); stmtp; stmtp = stmtp->nextp()) {
             if (AstVar* const varp = VN_CAST(stmtp, Var)) {
