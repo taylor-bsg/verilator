@@ -296,6 +296,7 @@ private:
     bool m_threadsCoarsen = true;   // main switch: --threads-coarsen
     bool m_threadsDpiPure = true;   // main switch: --threads-dpi all/pure
     bool m_threadsDpiUnpure = false;  // main switch: --threads-dpi all
+    bool m_threadsProgress = false;  // main switch: --threads-progress (experimental)
     VOptionBool m_timing;           // main switch: --timing
     bool m_trace = false;           // main switch: --trace
     bool m_traceCoverage = false;   // main switch: --trace-coverage
@@ -647,6 +648,7 @@ public:
     bool stopFail() const { return m_stopFail; }
     int threads() const VL_MT_SAFE { return m_threads; }
     int threadsMaxMTasks() const { return m_threadsMaxMTasks; }
+    bool threadsProgress() const { return m_threadsProgress; }
     bool mtasks() const VL_MT_SAFE { return (m_threads > 1); }
     VTimescale timeDefaultPrec() const { return m_timeDefaultPrec; }
     VTimescale timeDefaultUnit() const { return m_timeDefaultUnit; }

@@ -576,6 +576,7 @@ detailed descriptions of these arguments.
     --threads <threads>         Enable multithreading
     --threads-dpi <mode>        Enable multithreaded DPI
     --threads-max-mtasks <mtasks>  Tune maximum mtask partitioning
+    --threads-progress          Use experimental single-writer task progress
     --timescale <timescale>     Sets default timescale
     --timescale-override <timescale>  Overrides all timescales
     --timing                    Enable timing support
