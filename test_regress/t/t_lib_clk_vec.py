@@ -9,6 +9,8 @@
 
 import vltest_bootstrap
 
+import re
+
 test.scenarios('vlt_all')
 
 lib_dir = test.obj_dir + "/sub"
@@ -22,12 +24,15 @@ test.run(logfile=lib_dir + "/verilator.log",
          ],
          verilator_run=True)
 
-# Split inouts create ports with equal pin numbers; their names break ties.
+# Split inouts have pin number zero and sort by name before source-declared ports.
 ports = test.file_grep(lib_dir + '/sub.sv', r'(?s)module sub \((.*?)\);')
 if ports:
-    names = [port.split()[-1] for port in ports[0].split(',')]
-    if names[:4] != ['bus_a__en', 'bus_a__out', 'bus_z__en', 'bus_z__out']:
-        test.error('Generated ports are not in deterministic name order: ' + str(names))
+    names = [re.search(r'(\w+)\s*(?:\[[^]]*\]\s*)*$', port)[1] for port in ports[0].split(',')]
+    if names != [
+            'bus_a__en', 'bus_a__out', 'bus_z__en', 'bus_z__out', 'clkvec', 'cnt', 'din', 'bus_z',
+            'bus_a', 'seen'
+    ]:
+        test.error('Exported ports differ from generated-then-source order: ' + str(names))
 
 test.run(logfile=lib_dir + "/make.log", cmd=[os.environ["MAKE"], "-C", lib_dir, "-f", "Vsub.mk"])
 
