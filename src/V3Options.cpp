@@ -1811,6 +1811,7 @@ void V3Options::parseOptsList(FileLine* fl, const string& optdir, int argc,
                         << fl->warnMore() << "... Suggest 'all', 'none', or 'pure'");
         }
     });
+    DECL_OPTION("-threads-layout-single-worker", OnOff, &m_threadsLayoutSingleWorker);
     DECL_OPTION("-threads-max-mtasks", CbVal, [this, fl](const char* valp) {
         m_threadsMaxMTasks = std::atoi(valp);
         if (m_threadsMaxMTasks < 1) fl->v3fatal("--threads-max-mtasks must be >= 1: " << valp);

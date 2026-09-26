@@ -575,6 +575,7 @@ detailed descriptions of these arguments.
      +systemverilogext+<ext>    Synonym for +1800-2023ext+<ext>
     --threads <threads>         Enable multithreading
     --threads-dpi <mode>        Enable multithreaded DPI
+    --threads-layout-single-worker  Group state accessed by one worker (default)
     --threads-max-mtasks <mtasks>  Tune maximum mtask partitioning
     --timescale <timescale>     Sets default timescale
     --timescale-override <timescale>  Overrides all timescales

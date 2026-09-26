@@ -34,7 +34,9 @@ def gen(filename, nregs):
 
 gen(test.top_filename, 24)
 
-flags = ["--cc", "--stats", "-Wno-UNOPTTHREADS"]
+# Preserve the original exact-writer regression independently of the optional
+# single-worker refinement, which has its own enabled/disabled fixture.
+flags = ["--cc", "--stats", "-Wno-UNOPTTHREADS", "--no-threads-layout-single-worker"]
 if test.vltmt:
     flags += ["--threads-max-mtasks 16"]
 

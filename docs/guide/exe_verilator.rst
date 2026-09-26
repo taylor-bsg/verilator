@@ -1855,6 +1855,18 @@ Summary:
 
    See also :vlopt:`--instr-count-dpi` option.
 
+.. option:: --threads-layout-single-worker
+
+   For internal use only. Group fields accessed by only one scheduled worker
+   without separating them by writing task. Fields accessed by multiple
+   workers retain exact writing-task separation. Enabled by default.
+
+   Use :code:`--no-threads-layout-single-worker` to retain writing-task
+   separation for all fields when comparing layouts. This option affects
+   generated field layout, not task scheduling or DFG declaration sharing.
+   It has no effect on single-threaded models. Regenerate and rebuild the
+   simulator after changing this option.
+
 .. option:: --threads-max-mtasks <value>
 
    Rarely needed. When using :vlopt:`--threads`, specify the number of
