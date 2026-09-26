@@ -32,7 +32,7 @@ def gen(filename, nregs):
         fh.write("endmodule\n")
 
 
-gen(test.top_filename, 24)
+gen(test.top_filename, 32)
 
 flags = ["--cc", "--stats", "-Wno-UNOPTTHREADS"]
 if test.vltmt:
@@ -45,10 +45,11 @@ aligned_var_re = r'alignas\(VL_CACHE_LINE_BYTES\) (?:CData|SData|IData|QData|VlW
 
 if test.vltmt:
     test.file_grep(root_h, aligned_var_re)
-    # Coalesce reader tasks on the same worker, but retain three distinct
-    # register-bank writer groups, the output group, and the read-only group.
-    test.file_grep(test.stats, r'VariableOrder, MTask affinity groups\s+(\d+)', 5)
-    test.file_grep(test.stats, r'VariableOrder, MTask aligned group starts\s+(\d+)', 5)
+    # One group for the output and the two register banks used only by its worker, one for
+    # the read-only inputs, and one each for the two banks whose writer tasks share a worker
+    # while the output's worker reads them.
+    test.file_grep(test.stats, r'VariableOrder, MTask affinity groups\s+(\d+)', 4)
+    test.file_grep(test.stats, r'VariableOrder, MTask aligned group starts\s+(\d+)', 4)
 else:
     test.file_grep_not(root_h, aligned_var_re)
     test.file_grep_not(test.stats, r'VariableOrder, MTask affinity groups')

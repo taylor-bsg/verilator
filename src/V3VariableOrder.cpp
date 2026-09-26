@@ -237,6 +237,16 @@ void V3VariableOrder::orderAll(AstNetlist* netlistp) {
                 GatherMTaskAffinity::apply(vtx.as<const ExecMTask>(), mTaskAffinity);
             }
         });
+        // Writer identities only separate state shared between workers. State accessed by a
+        // single worker cannot be falsely shared, so group it by that worker alone.
+        const size_t usedIds = ExecMTask::numUsedIds();
+        for (auto& pair : mTaskAffinity) {
+            MTaskIdVec& affinity = pair.second;
+            const auto writersBegin = affinity.begin() + usedIds;
+            if (std::count(affinity.begin(), writersBegin, true) == 1) {
+                std::fill(writersBegin, affinity.end(), false);
+            }
+        }
     }
     if (v3Global.opt.stats()) V3Stats::statsStage("variableorder-gather");
 
