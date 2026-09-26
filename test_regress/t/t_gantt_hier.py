@@ -17,7 +17,8 @@ test.top_filename = "t/t_gantt.v"
 test.pli_filename = "t/t_gantt_c.cpp"
 
 test.compile(
-    verilator_flags2=["--prof-exec", "--hierarchical", test.pli_filename],
+    # Keep parallel execution so both threads appear in the profile
+    verilator_flags2=["--prof-exec", "--hierarchical", "--threads-serial-cost 0", test.pli_filename],
     # Checks below care about thread count, so use 2 (minimum reasonable)
     threads=(2 if test.vltmt else 1))
 
