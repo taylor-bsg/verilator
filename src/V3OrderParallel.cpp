@@ -27,6 +27,7 @@
 #include "V3ExecGraph.h"
 #include "V3Graph.h"
 #include "V3GraphStream.h"
+#include "V3InstrCount.h"
 #include "V3OrderCFuncEmitter.h"
 #include "V3OrderInternal.h"
 #include "V3OrderMTaskGraph.h"
@@ -109,6 +110,42 @@ static void checkDataHazards(OrderMTaskGraph& mTaskGraph) {
     }
     // Fail if any hazards were found
     if (firstHazardp) firstHazardp->v3fatalSrc("Data hazards found");  // LCOV_EXCL_BR_LINE
+}
+
+//######################################################################
+// Serial fallback condition
+
+// A domain whose logic has at least this share of the graph cost (percent) is worth parallel
+// execution. Passes where no such domain triggered run the MTasks sequentially instead.
+constexpr uint64_t PARALLEL_DOMAIN_PERCENT = 10;
+// Only use the serial fallback if the remaining domains are cheap in total (percent)
+constexpr uint64_t SERIAL_DOMAINS_MAX_PERCENT = 25;
+
+// Returns the condition under which the graph should execute in parallel, or nullptr to always
+// execute it in parallel. 'domainCosts' is in first emitted order, for deterministic output.
+static AstNodeExpr* parallelCondition(
+    const std::vector<std::pair<AstSenTree*, uint64_t>>& domainCosts) {
+    uint64_t totalCost = 0;
+    for (const auto& pair : domainCosts) totalCost += pair.second;
+    const uint64_t heavyCost = totalCost * PARALLEL_DOMAIN_PERCENT / 100;
+    uint64_t lightCost = 0;
+    AstNodeExpr* condp = nullptr;
+    for (const auto& pair : domainCosts) {
+        if (pair.second < heavyCost || !pair.second) {
+            lightCost += pair.second;
+            continue;
+        }
+        AstIf* const ifp = V3Sched::util::createIfFromSenTree(pair.first);
+        AstNodeExpr* const trigp = ifp->condp()->unlinkFrBack();
+        VL_DO_DANGLING(ifp->deleteTree(), ifp);
+        condp = condp ? new AstOr{trigp->fileline(), condp, trigp} : trigp;
+    }
+    // Keep always parallel if no domain dominates, or the cheap domains are not negligible
+    if (condp
+        && (domainCosts.size() < 2 || lightCost * 100 > totalCost * SERIAL_DOMAINS_MAX_PERCENT)) {
+        VL_DO_DANGLING(condp->deleteTree(), condp);
+    }
+    return condp;
 }
 
 //######################################################################
@@ -248,6 +285,9 @@ AstNodeStmt* V3Order::createParallel(OrderMoveGraph& moveGraph, const std::strin
     std::unordered_map<const LogicMTask*, ExecMTask*> logicMTaskToExecMTask;
     OrderMoveGraphSerializer serializer{moveGraph};
     V3OrderCFuncEmitter emitter{tag, slow};
+    // Estimated cost of the logic in each sensitivity domain, in first emitted order
+    std::vector<std::pair<AstSenTree*, uint64_t>> domainCosts;
+    std::unordered_map<const AstSenTree*, size_t> domainIndex;
     // Sort LogicMTask vertices by their serial IDs.
     struct MTaskVxIdLessThan final {
         bool operator()(const V3GraphVertex* lhsp, const V3GraphVertex* rhsp) const {
@@ -283,6 +323,12 @@ AstNodeStmt* V3Order::createParallel(OrderMoveGraph& moveGraph, const std::strin
                 OrderMoveDomScope* const domScopep = &mVtxp->domScope();
                 if (domScopep != prevDomScopep) emitter.forceNewFunction();
                 prevDomScopep = domScopep;
+                // Account for the cost of this logic in its domain
+                AstSenTree* const domainp = logicp->domainp();
+                const auto result = domainIndex.emplace(domainp, domainCosts.size());
+                if (result.second) domainCosts.emplace_back(domainp, 0);
+                domainCosts[result.first->second].second
+                    += V3InstrCount::count(logicp->nodep(), false);
                 // Emit the logic under this vertex
                 emitter.emitLogic(logicp);
             }
@@ -315,6 +361,11 @@ AstNodeStmt* V3Order::createParallel(OrderMoveGraph& moveGraph, const std::strin
             if (fromp == mTaskGraphp->entryp()) continue;
             new V3GraphEdge{depGraphp, logicMTaskToExecMTask.at(fromp), execMTaskp, 1};
         }
+    }
+
+    // Record when parallel execution is worthwhile
+    if (AstNodeExpr* const condp = parallelCondition(domainCosts)) {
+        execGraphp->parallelCondp(condp);
     }
 
     // Delete the remaining variable vertices
