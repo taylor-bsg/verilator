@@ -22,7 +22,9 @@ test.compile(
     make_top_shell=False,
     make_main=False,
     # Keep parallel execution so both threads appear in the profile
-    verilator_flags2=["--prof-exec --exe --threads-serial-cost 0", test.pli_filename, "t/t_gantt_two.cpp"],
+    verilator_flags2=[
+        "--prof-exec --exe --threads-serial-cost 0", test.pli_filename, "t/t_gantt_two.cpp"
+    ],
     # Checks below care about thread count, so use 2 (minimum reasonable)
     threads=threads_num,
     make_flags=["CPPFLAGS_ADD=\"-DVL_NO_LEGACY -DTEST_USE_THREADS=" + str(threads_num) + "\""])
