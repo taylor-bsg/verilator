@@ -109,6 +109,10 @@ void VlWorkerThread::wait() {
     while (!flag.load()) std::this_thread::yield();
 }
 
+constexpr std::chrono::nanoseconds VlWorkerThread::s_spinTimeInit;
+constexpr std::chrono::nanoseconds VlWorkerThread::s_spinTimeMin;
+constexpr std::chrono::nanoseconds VlWorkerThread::s_spinTimeMax;
+
 void VlWorkerThread::main() {
     // Initialize thread_locals
     Verilated::threadContextp(m_contextp);
