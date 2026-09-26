@@ -27,7 +27,9 @@
 
 #include "verilated.h"  // for VerilatedMutex and clang annotations
 
+#include <algorithm>
 #include <atomic>
+#include <chrono>
 #include <condition_variable>
 #include <set>
 #include <stack>
@@ -112,13 +114,22 @@ public:
         return m_upstreamDepsDone.load(std::memory_order_acquire) == target;
     }
     void waitUntilUpstreamDone(bool evenCycle) const {
-        unsigned ct = 0;
-        while (VL_UNLIKELY(!areUpstreamDepsDone(evenCycle))) {
+        // Waits happen within an evaluation, so spin, yielding only rarely in case the CPU is
+        // oversubscribed. Measure time rather than spins, as spin cost varies with the CPU.
+        using Clock = std::chrono::steady_clock;
+        constexpr unsigned CHECK_MASK = 63;  // Spins between reading the clock, minus one
+        constexpr std::chrono::nanoseconds YIELD_TIME{1000000};  // Spin time before yielding
+        Clock::time_point start;
+        for (unsigned i = 0; VL_UNLIKELY(!areUpstreamDepsDone(evenCycle)); ++i) {
             VL_CPU_RELAX();
-            ++ct;
-            if (VL_UNLIKELY(ct > VL_LOCK_SPINS)) {
-                ct = 0;
-                yieldThread();
+            if (VL_UNLIKELY((i & CHECK_MASK) == CHECK_MASK)) {
+                const Clock::time_point now = Clock::now();
+                if (i == CHECK_MASK) {
+                    start = now;
+                } else if (now - start >= YIELD_TIME) {
+                    yieldThread();
+                    start = Clock::now();
+                }
             }
         }
     }
@@ -151,6 +162,13 @@ class VlWorkerThread final {
     std::vector<ExecRec> m_ready VL_GUARDED_BY(m_mutex);
     // Store the size atomically, so we can spin wait
     std::atomic<size_t> m_ready_size;
+    // How long to spin for new work before sleeping. Adapted by the worker thread only: sleeps
+    // that end soon mean the worker should have kept spinning, while long sleeps mean the model
+    // is idle, and spinning would only waste CPU time.
+    std::chrono::nanoseconds m_spinTime{s_spinTimeInit};
+    static constexpr std::chrono::nanoseconds s_spinTimeInit{50000};
+    static constexpr std::chrono::nanoseconds s_spinTimeMin{5000};
+    static constexpr std::chrono::nanoseconds s_spinTimeMax{1000000};
     // Thread context
     VerilatedContext* const m_contextp;
     // Underlying thread record
@@ -174,17 +192,41 @@ public:
     // METHODS
     template <bool N_SpinWait>
     void dequeWork(ExecRec* workp) VL_MT_SAFE_EXCLUDES(m_mutex) {
-        // Spin for a while, waiting for new data
+        using Clock = std::chrono::steady_clock;
+        // Spin for a while, waiting for new data. Only read the clock every so often, and not
+        // at all if work arrives quickly.
         if VL_CONSTEXPR_CXX17 (N_SpinWait) {
-            for (unsigned i = 0; i < VL_LOCK_SPINS; ++i) {
+            constexpr unsigned CHECK_MASK = 63;  // Spins between reading the clock, minus one
+            Clock::time_point start;
+            for (unsigned i = 0;; ++i) {
                 if (VL_LIKELY(m_ready_size.load(std::memory_order_relaxed))) break;
                 VL_CPU_RELAX();
+                if (VL_UNLIKELY((i & CHECK_MASK) == CHECK_MASK)) {
+                    const Clock::time_point now = Clock::now();
+                    if (i == CHECK_MASK) {
+                        start = now;
+                    } else if (now - start >= m_spinTime) {
+                        break;
+                    }
+                }
             }
         }
         const VerilatedLockGuard lock{m_mutex};
-        while (m_ready.empty()) {
-            m_waiting = true;
-            m_cv.wait(m_mutex);
+        if (m_ready.empty()) {
+            const Clock::time_point sleepStart = Clock::now();
+            while (m_ready.empty()) {
+                m_waiting = true;
+                m_cv.wait(m_mutex);
+            }
+            if VL_CONSTEXPR_CXX17 (N_SpinWait) {
+                // Adapt how long to spin before sleeping next time
+                const Clock::duration slept = Clock::now() - sleepStart;
+                if (slept < 4 * m_spinTime) {
+                    m_spinTime = std::min(2 * m_spinTime, s_spinTimeMax);
+                } else if (slept > 64 * m_spinTime) {
+                    m_spinTime = std::max(m_spinTime / 2, s_spinTimeMin);
+                }
+            }
         }
         m_waiting = false;
         // As noted above this is inefficient if our ready list is ever
