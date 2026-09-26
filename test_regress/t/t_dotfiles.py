@@ -14,7 +14,8 @@ test.scenarios('vltmt')
 # Use a top file which we are sure to be parallelizable
 test.top_filename = "t/t_gen_alw.v"
 
-test.compile(v_flags2=["--dumpi-graph 6"], threads=2)
+# Keep parallel execution so the thread schedule is dumped
+test.compile(v_flags2=["--dumpi-graph 6", "--threads-serial-cost 0"], threads=2)
 
 for dotname in [
         "linkcells", "task_call", "gate_graph", "gate_final", "acyc_simp", "orderg_pre",
