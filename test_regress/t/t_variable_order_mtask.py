@@ -36,7 +36,8 @@ gen(test.top_filename, 32)
 
 flags = ["--cc", "--stats", "-Wno-UNOPTTHREADS"]
 if test.vltmt:
-    flags += ["--threads-max-mtasks 8"]
+    # Keep parallel execution so the layout follows the thread schedule
+    flags += ["--threads-max-mtasks 8", "--threads-serial-cost 0"]
 
 test.compile(verilator_flags2=flags, threads=(2 if test.vltmt else 1))
 

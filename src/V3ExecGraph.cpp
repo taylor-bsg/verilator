@@ -1141,9 +1141,9 @@ void implementExecGraph(AstExecGraph* const execGraphp, const ThreadSchedule& sc
     addThreadStartToExecGraph(execGraphp, funcps, schedule.id());
 }
 
-void addSerialFallback(AstExecGraph* const execGraphp, AstNodeExpr* const parallelCondp) {
-    // Run the MTasks sequentially on the calling thread unless 'parallelCondp' holds. MTask IDs
-    // are assigned in a topological order, so sorting by ID gives a valid sequential order.
+AstNode* createSerialStmts(AstExecGraph* const execGraphp) {
+    // Statements running the MTasks sequentially on the calling thread. MTask IDs are assigned
+    // in a topological order, so sorting by ID gives a valid sequential order.
     FileLine* const flp = execGraphp->fileline();
     std::vector<const ExecMTask*> mtaskps;
     for (const V3GraphVertex& vtx : execGraphp->depGraphp()->vertices()) {
@@ -1176,8 +1176,14 @@ void addSerialFallback(AstExecGraph* const execGraphp, AstNodeExpr* const parall
         serialp = AstNode::addNext(
             serialp, new AstCStmt{flp, "VL_EXEC_TRACE_ADD_RECORD(vlSymsp).execGraphEnd();"});
     }
+    return serialp;
+}
+
+void addSerialFallback(AstExecGraph* const execGraphp, AstNodeExpr* const parallelCondp) {
+    // Run the MTasks sequentially on the calling thread unless 'parallelCondp' holds
     AstNode* const parallelp = execGraphp->stmtsp()->unlinkFrBackWithNext();
-    execGraphp->addStmtsp(new AstIf{flp, parallelCondp, parallelp, serialp});
+    execGraphp->addStmtsp(new AstIf{execGraphp->fileline(), parallelCondp, parallelp,
+                                    createSerialStmts(execGraphp)});
     V3Stats::addStatSum("Optimizations, Thread serial fallbacks", 1);
 }
 
@@ -1218,6 +1224,20 @@ void implement(AstNetlist* netlistp) {
         finalizeCosts(execGraphp->depGraphp());
 
         if (dumpGraphLevel() >= 4) execGraphp->depGraphp()->dumpDotFilePrefixedAlways("pack");
+
+        // If no pass gains from parallel execution, always run the MTasks sequentially
+        if (parallelCondp && parallelCondp->isZero()) {
+            VL_DO_DANGLING(parallelCondp->deleteTree(), parallelCondp);
+            // All MTasks run on the calling thread, so they share a single worker for layout
+            const V3GraphVertex* const firstp = execGraphp->depGraphp()->vertices().frontp();
+            const uint32_t workerId = firstp->as<const ExecMTask>()->id();
+            for (V3GraphVertex& vtx : execGraphp->depGraphp()->vertices()) {
+                vtx.as<ExecMTask>()->affinityId(workerId);
+            }
+            processMTaskBodies(execGraphp);
+            execGraphp->addStmtsp(createSerialStmts(execGraphp));
+            continue;
+        }
 
         addThreadStartWrapper(execGraphp);
 

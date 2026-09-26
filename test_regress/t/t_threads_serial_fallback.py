@@ -11,10 +11,13 @@ import vltest_bootstrap
 
 test.scenarios('vlt_all')
 
-test.compile(verilator_flags2=["--stats"], threads=(2 if test.vltmt else 1))
+# A small break-even cost makes the rising-edge logic worth parallel execution
+test.compile(verilator_flags2=["--stats", "--threads-serial-cost", "100"],
+             threads=(2 if test.vltmt else 1))
 
 if test.vltmt:
     test.file_grep(test.stats, r'Optimizations, Thread serial fallbacks\s+(\d+)', 1)
+    test.file_grep_not(test.stats, r'Optimizations, Thread serial-only graphs')
 else:
     test.file_grep_not(test.stats, r'Optimizations, Thread serial fallbacks')
 
