@@ -6001,6 +6001,7 @@ class WidthVisitor final : public VNVisitor {
                 AstPatMember* patp = nullptr;
                 if (it == patmap.end()) {  // Default or default_type assignment
                     patp = defaultPatp_patternUOrStruct(nodep, memp, vdtypep, defaultp, dtypemap);
+                    if (!patp) continue;  // No value, reported if not a union
                     pushDeletep(patp);  // patp used below
                     patp = defaultPatp_forDType(patp, memp->virtRefDTypep(), dtypemap);
                     pushDeletep(patp);  // patp used below
@@ -6015,11 +6016,11 @@ class WidthVisitor final : public VNVisitor {
             }
             newp = new AstConsPackUOrStruct{nodep->fileline(), vdtypep, membersp};
         }
-        if (newp) {
-            nodep->replaceWith(newp);
-        } else {
+        if (!newp) {
             nodep->v3error("Assignment pattern with no members");
+            newp = new AstConst{nodep->fileline(), AstConst::BitFalseErroring{}};
         }
+        nodep->replaceWith(newp);
     }
 
     AstNodeExpr* nestedvalueConcat_patternUOrStruct(AstNodeUOrStructDType* memp_vdtypep,
@@ -6222,11 +6223,11 @@ class WidthVisitor final : public VNVisitor {
             if (newpatp) VL_DO_DANGLING(pushDeletep(newpatp), newpatp);
         }
         if (!patmap.empty()) nodep->v3error("Assignment pattern with too many elements");
-        if (newp) {
-            nodep->replaceWith(newp);
-        } else {
+        if (!newp) {
             nodep->v3error("Assignment pattern with no members");
+            newp = new AstConst{nodep->fileline(), AstConst::BitFalseErroring{}};
         }
+        nodep->replaceWith(newp);
         // UINFOTREE(9, newp, "", "apat-out");
     }
     void patternAssoc(AstPattern* nodep, AstAssocArrayDType* arrayDtp, AstPatMember* defaultp) {
@@ -6352,11 +6353,11 @@ class WidthVisitor final : public VNVisitor {
             if (newpatp) VL_DO_DANGLING(pushDeletep(newpatp), newpatp);
         }
         if (!patmap.empty()) nodep->v3error("Assignment pattern with too many elements");
-        if (newp) {
-            nodep->replaceWith(newp);
-        } else {
+        if (!newp) {
             nodep->v3error("Assignment pattern with no members");
+            newp = new AstConst{nodep->fileline(), AstConst::BitFalseErroring{}};
         }
+        nodep->replaceWith(newp);
         // UINFOTREE(9, newp, "", "apat-out");
     }
     AstNodeExpr* patternMemberValueIterate(AstPatMember* patp) {

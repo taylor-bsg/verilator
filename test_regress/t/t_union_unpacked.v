@@ -18,6 +18,8 @@ module t;
     if (u.val2 != 4'hc) $stop;
     u.r = 1.24;
     if (u.r != 1.24) $stop;
+    u = '{val1: 8'h5a};  // Pattern naming one member
+    if (u.val1 != 8'h5a) $stop;
     $display("%p", u);
     $write("*-* All Finished *-*\n");
     $finish;
