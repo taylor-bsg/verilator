@@ -1,0 +1,7 @@
+%Error: Missing --hierarchical-block-key for hierarchical library 'Missing_lib'. Regenerate the hierarchical build files.
+        ... See the manual at https://verilator.org/verilator_doc.html?v=latest for more assistance.
+%Error: t/t_hier_block_key_bad.v:9:18: No hierarchical library wrapper matches specialization of module 'Wrong'. Regenerate the hierarchical build files.
+                                     : ... note: In instance 't'
+    9 |   Wrong #(.N(1)) wrong ();
+      |                  ^~~~~
+%Error: Exiting due to

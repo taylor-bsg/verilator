@@ -309,6 +309,7 @@ class AstNodeModule VL_NOT_FINAL : public AstNode {
     // dist-ast-dump-suppress  // For some user errors messages only, visible where used
     string m_someInstanceName;  // Hierarchical name of some arbitrary instance of this module.
     string m_libname;  // Work library
+    string m_hierBlockKey;  // Exact parameter specialization recipe for hierarchical lookup
     int m_depth = 0;  // 1=top module, 2=cell off top, shared things low, for -depth options
     int m_level = 0;  // 1=top module, 2=cell off top, shared things have high number
     VLifetime m_lifetime;  // Lifetime
@@ -355,6 +356,9 @@ public:
     ASTGEN_MEMBERS_AstNodeModule;
     void dump(std::ostream& str) const override;
     void dumpJson(std::ostream& str) const override;
+    bool sameNode(const AstNode* samep) const override {
+        return m_hierBlockKey == static_cast<const AstNodeModule*>(samep)->m_hierBlockKey;
+    }
     bool maybePointedTo() const override VL_MT_SAFE { return true; }
     string name() const override VL_MT_STABLE { return m_name; }
     virtual bool timescaleMatters() const = 0;
@@ -387,6 +391,8 @@ public:
     void hasGParam(bool flag) { m_hasGParam = flag; }
     bool hasParameterList() const { return m_hasParameterList; }
     void hasParameterList(bool flag) { m_hasParameterList = flag; }
+    const string& hierBlockKey() const { return m_hierBlockKey; }
+    void hierBlockKey(const string& key) { m_hierBlockKey = key; }
     bool hierBlock() const { return m_hierBlock; }
     void hierBlock(bool flag) { m_hierBlock = flag; }
     bool hierParams() const { return m_hierParams; }

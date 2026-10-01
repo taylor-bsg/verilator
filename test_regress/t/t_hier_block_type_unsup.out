@@ -1,0 +1,8 @@
+%Error: t/t_hier_block_type_unsup.v:11:24: Unsupported: Hierarchical type parameter data type: WILDCARDARRAYDTYPE.
+   11 | typedef int wildcard_t [*];
+      |                        ^~
+        ... See the manual at https://verilator.org/verilator_doc.html?v=latest for more assistance.
+%Error: t/t_hier_block_type_unsup.v:12:17: Unsupported: Hierarchical type parameter data type: IFACEREFDTYPE.
+   12 | typedef virtual channel channel_t;
+      |                 ^~~~~~~
+%Error: Exiting due to

@@ -31,6 +31,7 @@ VL_DEFINE_DEBUG_FUNCTIONS;
 class EmitVBaseVisitorConst VL_NOT_FINAL : public VNVisitorConst {
     // STATE - across all visitors
     const bool m_suppressUnknown;  // Do not error on unknown node
+    const std::map<string, string>* const m_typeNamesp;  // Hierarchical type source references
 
     // STATE - for current visit position (use VL_RESTORER)
     AstSenTree* m_sentreep = nullptr;  // Domain for printing one a ALWAYS under a ACTIVE
@@ -69,6 +70,25 @@ class EmitVBaseVisitorConst VL_NOT_FINAL : public VNVisitorConst {
             iterateConstNull(packedp->rangep());
         }
         m_packedps.clear();
+    }
+    void emitNominalType(AstNodeDType* nodep) {
+        if (m_arrayPost) return;
+        const auto it = m_typeNamesp->find(nodep->name());
+        if (it == m_typeNamesp->end()) {
+            nodep->v3error("Unsupported: Hierarchical type parameter referencing a local or "
+                           "anonymous nominal type: "
+                           << nodep->prettyNameQ() << ".");
+            puts("logic");  // Keep emitting valid syntax after the diagnostic.
+        } else {
+            puts(it->second);
+        }
+        emitPacked();
+    }
+    void emitUnsupportedType(AstNodeDType* nodep) {
+        if (m_arrayPost) return;
+        nodep->v3error("Unsupported: Hierarchical type parameter data type: "
+                       << nodep->prettyTypeName() << ".");
+        puts("logic");
     }
     void emitNodesWithText(AstNode* nodesp, bool tracking, const std::string& separator) {
         for (AstNode* nodep = nodesp; nodep; nodep = nodep->nextp()) {
@@ -948,9 +968,13 @@ class EmitVBaseVisitorConst VL_NOT_FINAL : public VNVisitorConst {
     void visit(AstThisRef* /*nodep*/) override { puts("this"); }
     void visit(AstTypedef* nodep) override {
         putfs(nodep, "typedef ");
+        VL_RESTORER(m_arrayPost);
+        m_arrayPost = false;
         iterateConstNull(nodep->subDTypep());
         puts(" ");
-        puts(nodep->prettyName());
+        puts(m_typeNamesp ? "\\" + nodep->prettyName() + " " : nodep->prettyName());
+        m_arrayPost = true;
+        iterateConstNull(nodep->subDTypep());
         puts(";\n");
     }
     void visit(AstNodeCoverOrAssert* nodep) override {
@@ -1004,8 +1028,16 @@ class EmitVBaseVisitorConst VL_NOT_FINAL : public VNVisitorConst {
         if (m_arrayPost) return;
         putfs(nodep, nodep->prettyName());
         if (nodep->isSigned() && !nodep->keyword().isDouble()) putfs(nodep, " signed");
-        // Do not emit ranges for integer atoms.
-        if (nodep->keyword().isIntNumeric() && !nodep->keyword().isBitLogic()) return;
+        if (!nodep->isSigned() && !nodep->isNosign() && nodep->keyword().isSigned()
+            && !nodep->keyword().isDouble()) {
+            putfs(nodep, " unsigned");
+        }
+        // Integer atoms and opaque types do not have packed ranges. In particular,
+        // a chandle's internal pointer width is not a SystemVerilog range.
+        if ((nodep->keyword().isIntNumeric() && !nodep->keyword().isBitLogic())
+            || nodep->keyword().isOpaque() || nodep->keyword().isCHandle()) {
+            return;
+        }
         emitPacked();
         if (nodep->rangep()) {
             puts(" ");
@@ -1033,6 +1065,10 @@ class EmitVBaseVisitorConst VL_NOT_FINAL : public VNVisitorConst {
         }
     }
     void visit(AstEnumDType* nodep) override {
+        if (m_typeNamesp) {
+            emitNominalType(nodep);
+            return;
+        }
         if (m_arrayPost) return;
         putfs(nodep, "enum ");
         iterateConst(nodep->subDTypep());
@@ -1073,6 +1109,10 @@ class EmitVBaseVisitorConst VL_NOT_FINAL : public VNVisitorConst {
         }
     }
     void visit(AstIfaceRefDType* nodep) override {
+        if (m_typeNamesp) {
+            emitUnsupportedType(nodep);
+            return;
+        }
         if (m_arrayPost) {
             puts(" (");
             if (nodep->cellp()) {
@@ -1087,12 +1127,19 @@ class EmitVBaseVisitorConst VL_NOT_FINAL : public VNVisitorConst {
     }
     void visit(AstRefDType* nodep) override {
         if (nodep->subDTypep()) {
-            iterateConst(nodep->skipRefp());
+            iterateConst(m_typeNamesp ? nodep->skipRefToNonRefp() : nodep->skipRefp());
         } else {
             puts("\n???? // "s + nodep->prettyTypeName() + " -> UNLINKED\n");
         }
     }
     void visit(AstClassRefDType* nodep) override {
+        if (m_arrayPost) return;
+        if (m_typeNamesp) {
+            nodep->v3error(
+                "Unsupported: Hierarchical class type parameter: " << nodep->prettyNameQ() << ".");
+            puts("logic");
+            return;
+        }
         UASSERT_OBJ(nodep->classp(), nodep, "AstClassRefDType not linked");
         putfs(nodep, EmitCUtil::prefixNameProtect(nodep->classp()));
     }
@@ -1122,9 +1169,14 @@ class EmitVBaseVisitorConst VL_NOT_FINAL : public VNVisitorConst {
         if (nodep->nextp()) puts(", ");
     }
     void visit(AstNodeUOrStructDType* nodep) override {
+        if (m_typeNamesp) {
+            emitNominalType(nodep);
+            return;
+        }
         if (m_arrayPost) return;
         puts(nodep->verilogKwd() + " ");
         if (nodep->packed()) puts("packed ");
+        if (nodep->isSigned()) puts("signed ");
         {
             puts("{\n");
             VL_RESTORER_CLEAR(m_packedps);
@@ -1138,9 +1190,12 @@ class EmitVBaseVisitorConst VL_NOT_FINAL : public VNVisitorConst {
     }
     void visit(AstMemberDType* nodep) override {
         if (m_arrayPost) return;
+        VL_RESTORER(m_arrayPost);
         iterateConst(nodep->subDTypep());
         puts(" ");
         puts(nodep->name());
+        m_arrayPost = true;
+        iterateConst(nodep->subDTypep());
         puts(";\n");
     }
     void visit(AstQueueDType* nodep) override {
@@ -1356,6 +1411,12 @@ class EmitVBaseVisitorConst VL_NOT_FINAL : public VNVisitorConst {
     void visit(AstCell*) override {}  // Handled outside the Visit class
     // Default
     void visit(AstNode* nodep) override {
+        if (m_typeNamesp) {
+            if (AstNodeDType* const dtypep = VN_CAST(nodep, NodeDType)) {
+                emitUnsupportedType(dtypep);
+                return;
+            }
+        }
         puts("\n???? // "s + nodep->prettyTypeName() + "\n");
         iterateChildrenConst(nodep);
         // Not v3fatalSrc so we keep processing
@@ -1366,8 +1427,10 @@ class EmitVBaseVisitorConst VL_NOT_FINAL : public VNVisitorConst {
     }
 
 public:
-    explicit EmitVBaseVisitorConst(bool suppressUnknown)
-        : m_suppressUnknown{suppressUnknown} {}
+    explicit EmitVBaseVisitorConst(bool suppressUnknown,
+                                   const std::map<string, string>* typeNamesp = nullptr)
+        : m_suppressUnknown{suppressUnknown}
+        , m_typeNamesp{typeNamesp} {}
     ~EmitVBaseVisitorConst() override = default;
 };
 
@@ -1412,8 +1475,9 @@ class EmitVStreamVisitor final : public EmitVBaseVisitorConst {
     void putqs(AstNode*, const string& str) override { putbs(str); }
 
 public:
-    EmitVStreamVisitor(const AstNode* nodep, std::ostream& os, bool tracking, bool suppressUnknown)
-        : EmitVBaseVisitorConst{suppressUnknown}
+    EmitVStreamVisitor(const AstNode* nodep, std::ostream& os, bool tracking, bool suppressUnknown,
+                       const std::map<string, string>* typeNamesp = nullptr)
+        : EmitVBaseVisitorConst{suppressUnknown, typeNamesp}
         , m_os{os, V3OutFormatter::LA_VERILOG}
         , m_tracking{tracking} {
         iterateConst(const_cast<AstNode*>(nodep));
@@ -1423,6 +1487,36 @@ public:
 
 //######################################################################
 // EmitV class functions
+
+V3EmitV::TypeEmitter::TypeEmitter(const AstNetlist* netlistp) {
+    for (const AstNodeModule* modp = netlistp->modulesp(); modp;
+         modp = VN_AS(modp->nextp(), NodeModule)) {
+        const AstPackage* const pkgp = VN_CAST(modp, Package);
+        if (!pkgp) continue;
+        for (const AstNode* stmtp = pkgp->stmtsp(); stmtp; stmtp = stmtp->nextp()) {
+            const AstTypedef* const tdefp = VN_CAST(stmtp, Typedef);
+            if (!tdefp || !tdefp->subDTypep()) continue;
+            const AstNodeDType* const dtypep = tdefp->subDTypep();
+            if (!VN_IS(dtypep, NodeUOrStructDType) && !VN_IS(dtypep, EnumDType)) continue;
+            // LinkParse records this name only on the original nominal declaration.
+            // An alias in another scope must not rename the declaration used for transport.
+            const string sourceName = pkgp->name() + "::" + tdefp->name();
+            if (dtypep->name() != sourceName) continue;
+            // Always escape source identifiers, including keywords and punctuation. $unit
+            // is a SystemVerilog scope keyword, rather than a user-defined package name.
+            const string scope = pkgp->isDollarUnit() ? "$unit" : "\\" + pkgp->prettyName() + " ";
+            m_typeNames.emplace(sourceName, scope + "::\\" + tdefp->prettyName() + " ");
+        }
+    }
+}
+
+void V3EmitV::TypeEmitter::verilogForType(AstNodeDType* dtypep, const string& name,
+                                          std::ostream& os) const {
+    AstTypedef* const tdefp = new AstTypedef{dtypep->fileline(), name, nullptr, VFlagChildDType{},
+                                             dtypep->cloneTreePure(false)};
+    EmitVStreamVisitor{tdefp, os, false, false, &m_typeNames};
+    VL_DO_DANGLING(tdefp->deleteTree(), tdefp);
+}
 
 void V3EmitV::verilogForTree(const AstNode* nodep, std::ostream& os) {
     { EmitVStreamVisitor{nodep, os, /* tracking: */ false, false}; }

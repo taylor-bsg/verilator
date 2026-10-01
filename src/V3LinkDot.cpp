@@ -1348,14 +1348,14 @@ class LinkDotFindVisitor final : public VNVisitor {
             if (nodep->hierParams()) {
                 UINFO(1, "Found module with hier type parameters");
                 m_hierParamsName = nodep->name();
-                for (const AstNode* stmtp = nodep->stmtsp(); stmtp; stmtp = stmtp->nextp()) {
-                    if (const AstTypedef* const tdef = VN_CAST(stmtp, Typedef)) {
-                        UINFO(1, "Inserting hier type parameter typedef: " << tdef);
-                        VSymEnt* const upperSymp = m_curSymp ? m_curSymp : m_statep->rootEntp();
-                        m_curSymp = m_modSymp = m_statep->insertBlock(upperSymp, nodep->name(),
-                                                                      nodep, m_classOrPackagep);
-                    }
-                }
+                // Like an implementation module, the helper must see $unit and packages.
+                VSymEnt* const upperSymp = m_curSymp ? m_curSymp : m_statep->dunitEntp();
+                m_curSymp = m_modSymp
+                    = m_statep->insertBlock(upperSymp, nodep->name(), nodep, m_classOrPackagep);
+                // Type declarations may contain aggregates with their own symbol scopes.
+                // Link the source declarations as well as the copies installed in the child.
+                iterateChildren(nodep);
+                nodep->user4(true);
             } else {
                 // Will be optimized away later
                 // Can't remove now, as our backwards iterator will throw up
@@ -2046,7 +2046,7 @@ class LinkDotFindVisitor final : public VNVisitor {
         UASSERT_OBJ(m_curSymp, nodep, "Parameter type not under module/package/$unit");
 
         // Replace missing param types with provided hierarchical type params.
-        if (!m_hierParamsName.empty()) {
+        if (!m_hierParamsName.empty() && m_modSymp->nodep() == v3Global.rootp()->topModulep()) {
             if (const VSymEnt* const typedefEntp = m_curSymp->findIdFallback(m_hierParamsName)) {
                 const AstModule* modp = VN_CAST(typedefEntp->nodep(), Module);
 
@@ -2445,6 +2445,34 @@ class LinkDotParamVisitor final : public VNVisitor {
     // STATE
     LinkDotState* const m_statep;  // State to pass between visitors, including symbol table
     AstNodeModule* m_modp = nullptr;  // Current module
+    std::set<const AstNodeModule*> m_hierBlockModules;  // Boundaries before LinkResolve
+
+    const AstNodeModule* crossedHierBlock(const VSymEnt* sourcep, const VSymEnt* targetp) const {
+        if (m_hierBlockModules.empty()) return nullptr;
+        std::set<const VSymEnt*> sourceScopes;
+        for (const VSymEnt* scopep = sourcep; scopep; scopep = scopep->parentp()) {
+            sourceScopes.insert(scopep);
+        }
+        // A defparam may set a boundary's own parameters: these become normal parameter
+        // pins and are transported with the specialization. Only entering its body loses
+        // an override when that body is compiled in a separate invocation.
+        const VSymEnt* commonp = targetp->parentp();
+        while (commonp && !sourceScopes.count(commonp)) commonp = commonp->parentp();
+        const auto boundary = [&](const VSymEnt* scopep) -> const AstNodeModule* {
+            const AstCell* const cellp = VN_CAST(scopep->nodep(), Cell);
+            const AstNodeModule* const modp = cellp ? cellp->modp() : nullptr;
+            return m_hierBlockModules.count(modp) ? modp : nullptr;
+        };
+        for (const VSymEnt* scopep = targetp->parentp(); scopep && scopep != commonp;
+             scopep = scopep->parentp()) {
+            if (const AstNodeModule* const modp = boundary(scopep)) return modp;
+        }
+        for (const VSymEnt* scopep = sourcep; scopep && scopep != commonp;
+             scopep = scopep->parentp()) {
+            if (const AstNodeModule* const modp = boundary(scopep)) return modp;
+        }
+        return nullptr;
+    }
 
     void pinImplicitExprRecurse(AstNode* nodep) {
         // Under a pin, Check interconnect expression for a pin reference or a concat.
@@ -2508,11 +2536,15 @@ class LinkDotParamVisitor final : public VNVisitor {
         UASSERT_OBJ(!hasPartSelect && !path.empty(), nodep, "Unexpected defparam path shape");
         string baddot;
         VSymEnt* okSymp = nullptr;
-        VSymEnt* const foundp = m_statep->findDotted(
-            nodep->fileline(), m_statep->getNodeSym(nodep), path, baddot, okSymp, true);
+        VSymEnt* const sourcep = m_statep->getNodeSym(nodep);
+        VSymEnt* const foundp
+            = m_statep->findDotted(nodep->fileline(), sourcep, path, baddot, okSymp, true);
         AstCell* const cellp = foundp ? VN_AS(foundp->nodep(), Cell) : nullptr;
         if (!cellp) {
             nodep->v3error("In defparam, instance " << path << " never declared");
+        } else if (const AstNodeModule* const modp = crossedHierBlock(sourcep, foundp)) {
+            nodep->v3error("Unsupported: defparam crossing hierarchical block boundary "
+                           << modp->prettyNameQ() << ".");
         } else {
             AstNodeExpr* const exprp = nodep->rhsp()->unlinkFrBack();
             UINFO(9, "Defparam cell " << path << "." << nodep->name() << " attach-to " << cellp
@@ -2631,6 +2663,19 @@ public:
     LinkDotParamVisitor(AstNetlist* rootp, LinkDotState* statep)
         : m_statep{statep} {
         UINFO(4, __FUNCTION__ << ": ");
+        if (v3Global.opt.hierarchical()) {
+            // LinkResolve marks the modules after this pass has removed defparams. Inspect
+            // the pragmas here while both the origin and resolved target scopes are known.
+            for (AstNodeModule* modp = rootp->modulesp(); modp;
+                 modp = VN_AS(modp->nextp(), NodeModule)) {
+                if (modp == rootp->topModulep()) continue;
+                modp->foreach([&](const AstPragma* pragp) {
+                    if (pragp->pragType() == VPragmaType::HIER_BLOCK) {
+                        m_hierBlockModules.insert(modp);
+                    }
+                });
+            }
+        }
         iterate(rootp);
     }
     ~LinkDotParamVisitor() override = default;

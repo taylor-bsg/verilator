@@ -1,0 +1,11 @@
+%Error: t/t_hier_block_nominal_unsup.v:14:11: Unsupported: Hierarchical type parameter referencing a local or anonymous nominal type: 't.local_t'.
+   14 |   typedef struct packed {logic [6:0] value;} local_t;
+      |           ^~~~~~
+        ... See the manual at https://verilator.org/verilator_doc.html?v=latest for more assistance.
+%Error: t/t_hier_block_nominal_unsup.v:16:16: Unsupported: Hierarchical type parameter referencing a local or anonymous nominal type: ''.
+   16 |   blocked #(.T(struct packed {logic [6:0] value;})) anonymous_type (.clk);
+      |                ^~~~~~
+%Error: t/t_hier_block_nominal_unsup.v:17:16: Unsupported: Hierarchical class type parameter: 'item'.
+   17 |   blocked #(.T(item)) class_type (.clk);
+      |                ^~~~
+%Error: Exiting due to

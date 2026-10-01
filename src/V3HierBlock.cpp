@@ -31,7 +31,8 @@
 // There are 3 kinds of Verilator run.
 // a) To create ${prefix}_hier.mk (--hierarchical)
 // b) To --lib-create on each hierarchical block (--hierarchical-child)
-// c) To load wrappers and Verilate the top module (... what primary flags?)
+// c) To load wrappers and Verilate the top module (--hierarchical-block, without
+//    --hierarchical-child). This final consolidation must substitute child libraries.
 //
 // Then user can build Verilated module as usual.
 //
@@ -56,18 +57,19 @@
 // 5) In V3LinkDot.cpp,
 //    5-1) Dotted access across hierarchical block boundary is checked. Currently hierarchical
 //    block references are not supported.
-//    5-2) If present, parameters in hier params module replace parameter values of
-//    de-parameterized module in run b).
+//    5-2) If present, the hier params module supplies type parameters of run b)'s own
+//    top implementation. It does not override parameters of the consumed libraries.
 // 6) In V3Dead.cpp, some parameters of parameterized modules are protected not to be deleted even
 //    if the parameter is not referred. This protection is necessary to match step 6) below.
-// 7) In V3Param.cpp, use --lib-create wrapper of the parameterized module made in b) and c).
-//    If a hierarchical block is a parameterized module and instantiated in multiple locations,
-//    all parameters must exactly match.
+// 7) In V3Param.cpp, record the specialization recipe in run a). In runs b) and c),
+//    match each consumed parameterized block to its --lib-create wrapper by that full
+//    recipe. Run b) compiles its own top from RTL and substitutes only its dependencies.
+//    Type-file presence is independent of whether an invocation consumes libraries.
 // 8) In V3HierBlock.cpp, relationships among hierarchical blocks are checked in run a).
 //    (which block uses other blocks..)
 // 9) In V3EmitMk.cpp, ${prefix}_hier.mk is created in run a).
 //
-// There are three hidden command options:
+// The hidden command options include:
 //   --hierarchical-child is added to Verilator run b).
 //   --hierarchical-block module_name,mangled_name,name0,value0,name1,value1,...
 //       module_name  :The original modulename
@@ -78,16 +80,20 @@
 //
 //       Used for b) and c).
 //       These options are repeated for all instantiated hierarchical blocks.
+//   --hierarchical-block-key mangled_name,specialization_key
+//       Carries the full parameter recipe from a) to b) and c), including type parameters.
+//       Unlike generated names, the key is not shortened or subject to digest collisions.
 //   --hierarchical-params-file filename
 //      filename    :Name of a hierarchical parameters file
 //
-//      Added in a), used for b).
-//      Each de-parameterized module version has exactly one hier params file specified.
+//      Generated in a), added to b) only when its own implementation has type parameters.
+//      The option may be repeated. User-supplied files are forwarded to later invocations.
 
 #include "V3PchAstNoMT.h"  // VL_MT_DISABLED_CODE_UNIT
 
 #include "V3HierBlock.h"
 
+#include "V3Const.h"
 #include "V3Control.h"
 #include "V3EmitV.h"
 #include "V3File.h"
@@ -211,6 +217,10 @@ VStringList V3HierBlock::hierBlockArgs() const {
         s += "," + pair.second;
     }
     opts.back() += s;
+    if (!modp()->hierBlockKey().empty()) {
+        opts.emplace_back("--hierarchical-block-key " + modp()->name() + ","
+                          + modp()->hierBlockKey());
+    }
     return opts;
 }
 
@@ -262,10 +272,10 @@ void V3HierBlock::writeCommandArgsFile(bool forMkJson) const {
     V3HierWriteCommonInputs(this, of.get(), forMkJson);
     const VStringList& commandOpts = commandArgs(false);
     for (const string& opt : commandOpts) *of << opt << "\n";
-    *of << hierBlockArgs().front() << "\n";
+    for (const string& opt : hierBlockArgs()) *of << opt << "\n";
     for (const V3GraphEdge& edge : outEdges()) {
         const V3HierBlock* const dependencyp = edge.top()->as<V3HierBlock>();
-        *of << dependencyp->hierBlockArgs().front() << "\n";
+        for (const string& opt : dependencyp->hierBlockArgs()) *of << opt << "\n";
     }
     *of << v3Global.opt.allArgsStringForHierBlock(false) << "\n";
 }
@@ -278,7 +288,7 @@ string V3HierBlock::typeParametersFilename() const {
     return V3HierParametersFileName(hierPrefix());
 }
 
-void V3HierBlock::writeParametersFile() const {
+void V3HierBlock::writeParametersFile(const V3EmitV::TypeEmitter& typeEmitter) const {
     if (m_typeParams.empty()) return;
 
     VHashSha512 hash{"type params"};
@@ -288,8 +298,11 @@ void V3HierBlock::writeParametersFile() const {
     for (AstParamTypeDType* const gparam : m_typeParams) {
         AstTypedef* tdefp
             = new AstTypedef{new FileLine{FileLine::builtInFilename()}, gparam->name(), nullptr,
-                             VFlagChildDType{}, gparam->skipRefp()->cloneTreePure(true)};
-        V3EmitV::verilogForTree(tdefp, *of);
+                             VFlagChildDType{}, gparam->skipRefToNonRefp()->cloneTreePure(true)};
+        // Planning precedes whole-design width analysis. Resolve dependent type defaults
+        // in this specialized module before transporting them to a fresh compilation.
+        V3Const::constifyParamsEdit(tdefp->subDTypep());
+        typeEmitter.verilogForType(tdefp->subDTypep(), gparam->name(), *of);
         VL_DO_DANGLING(tdefp->deleteTree(), tdefp);
     }
     *of << "endmodule\n\n";
@@ -417,7 +430,7 @@ void V3HierGraph::writeCommandArgsFiles(bool forMkJson) const {
         *of << "--mod-prefix " << v3Global.opt.modPrefix() << "\n";
     }
     for (const V3GraphVertex& vtx : vertices()) {
-        *of << vtx.as<V3HierBlock>()->hierBlockArgs().front() << "\n";
+        for (const string& opt : vtx.as<V3HierBlock>()->hierBlockArgs()) *of << opt << "\n";
     }
 
     if (!v3Global.opt.libCreate().empty()) {
@@ -436,7 +449,10 @@ string V3HierGraph::topCommandArgsFilename(bool forMkJson) {
 }
 
 void V3HierGraph::writeParametersFiles() const {
-    for (const V3GraphVertex& vtx : vertices()) { vtx.as<V3HierBlock>()->writeParametersFile(); }
+    const V3EmitV::TypeEmitter typeEmitter{v3Global.rootp()};
+    for (const V3GraphVertex& vtx : vertices()) {
+        vtx.as<V3HierBlock>()->writeParametersFile(typeEmitter);
+    }
 }
 
 //######################################################################

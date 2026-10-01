@@ -2652,6 +2652,7 @@ void AstNodeModule::dump(std::ostream& str) const {
     } else if (recursive()) {
         str << " [RECURSIVE]";
     }
+    if (!hierBlockKey().empty()) str << " hierBlockKey=" << hierBlockKey();
     if (parameterizedTemplate()) str << " [PAR-TEMPL]";
     if (verilatorLib()) str << " [VERILATOR-LIB]";
     if (unconnectedDrive().isTrue()) str << " [UCDRV]";
@@ -2660,6 +2661,7 @@ void AstNodeModule::dump(std::ostream& str) const {
     if (libname() != "work") str << " libname=" << libname();
 }
 void AstNodeModule::dumpJson(std::ostream& str) const {
+    dumpJsonStrFunc(str, hierBlockKey);
     dumpJsonStrFunc(str, origName);
     dumpJsonStrFunc(str, verilogName);
     dumpJsonNumFunc(str, level);

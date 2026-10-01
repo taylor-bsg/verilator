@@ -20,6 +20,7 @@
 #include "verilatedos.h"
 
 #include "V3Ast.h"
+#include "V3EmitV.h"
 #include "V3Graph.h"
 
 #include <map>
@@ -97,7 +98,7 @@ public:
     string vFileIfNecessary() const VL_MT_DISABLED;
     // Write command line arguments to .f file for this hierarchical block
     void writeCommandArgsFile(bool forMkJson) const VL_MT_DISABLED;
-    void writeParametersFile() const VL_MT_DISABLED;
+    void writeParametersFile(const V3EmitV::TypeEmitter& typeEmitter) const VL_MT_DISABLED;
     string commandArgsFilename(bool forMkJson) const VL_MT_DISABLED;
     string typeParametersFilename() const VL_MT_DISABLED;
 

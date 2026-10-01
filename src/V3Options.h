@@ -216,6 +216,7 @@ private:
     DebugLevelMap m_dumpLevel;  // argument: --dumpi-<srcfile/tag> <level>
     std::map<const string, string> m_parameters;  // Parameters
     std::map<const string, V3HierarchicalBlockOption> m_hierBlocks;  // main switch: --hierarchical-block
+    std::map<string, string> m_hierBlockKeys;  // main switch: --hierarchical-block-key
     VStringSet m_fDfgPeepholeDisabled; // argument: -f[no-]dfg-peephole-<name>
 
     bool m_preprocOnly = false;     // main switch: -E
@@ -681,6 +682,7 @@ public:
                                                 : m_diagnosticsSarifOutput;
     }
     string exeName() const { return m_exeName != "" ? m_exeName : prefix(); }
+    const std::map<string, string>& hierBlockKeys() const { return m_hierBlockKeys; }
     VFileLibList hierParamFile() const { return m_hierParamsFile; }
     string jsonOnlyOutput() const { return m_jsonOnlyOutput; }
     string jsonOnlyMetaOutput() const { return m_jsonOnlyMetaOutput; }

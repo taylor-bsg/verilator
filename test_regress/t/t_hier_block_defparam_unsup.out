@@ -1,0 +1,14 @@
+%Error: t/t_hier_block_defparam_unsup.v:14:22: Unsupported: defparam crossing hierarchical block boundary 'boundary'.
+   14 |   defparam a.child.N = 2; defparam b.child.N = 3; defparam c.child.N = 4;
+      |                      ^
+        ... See the manual at https://verilator.org/verilator_doc.html?v=latest for more assistance.
+%Error: t/t_hier_block_defparam_unsup.v:14:46: Unsupported: defparam crossing hierarchical block boundary 'boundary'.
+   14 |   defparam a.child.N = 2; defparam b.child.N = 3; defparam c.child.N = 4;
+      |                                              ^
+%Error: t/t_hier_block_defparam_unsup.v:14:70: Unsupported: defparam crossing hierarchical block boundary 'cfg_boundary'.
+   14 |   defparam a.child.N = 2; defparam b.child.N = 3; defparam c.child.N = 4;
+      |                                                                      ^
+%Error: t/t_hier_block_defparam_unsup.v:30:24: Unsupported: defparam crossing hierarchical block boundary 'outward'.
+   30 |   defparam t.outside.N = 5;
+      |                        ^
+%Error: Exiting due to

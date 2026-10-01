@@ -1580,6 +1580,15 @@ void V3Options::parseOptsList(FileLine* fl, const string& optdir, int argc,
         const V3HierarchicalBlockOption opt{valp};
         m_hierBlocks.emplace(opt.mangledName(), opt);
     });
+    DECL_OPTION("-hierarchical-block-key", CbVal, [this, fl](const char* valp) {
+        const string value = valp;
+        const size_t comma = value.find(',');
+        if (comma == string::npos || comma == 0 || comma + 1 == value.size()) {
+            fl->v3error("--hierarchical-block-key requires a module name and specialization key.");
+        } else {
+            m_hierBlockKeys.emplace(value.substr(0, comma), value.substr(comma + 1));
+        }
+    });
     DECL_OPTION("-hierarchical-child", Set, &m_hierChild);
     DECL_OPTION("-hierarchical-params-file", CbVal,
                 [this](const char* optp) { m_hierParamsFile.push_back({optp, work()}); });

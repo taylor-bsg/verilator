@@ -480,6 +480,7 @@ detailed descriptions of these arguments.
     --help                      Show this help
     --hierarchical              Enable hierarchical Verilation
     --hierarchical-block <block>  Internal use only for --hierarchical
+    --hierarchical-block-key <key>  Internal specialization key for --hierarchical
     --hierarchical-child <block>  Internal use only for --hierarchical
     --hierarchical-params-file <name>  Internal option that specifies parameters file for hier blocks
     --hierarchical-threads <threads>  Number of threads for hierarchical scheduling

@@ -1006,6 +1006,11 @@ Summary:
 
    Internal use only, for :vlopt:`--hierarchical`.
 
+.. option:: --hierarchical-block-key <key>
+
+   Internal use only, identifies a parameter specialization for
+   :vlopt:`--hierarchical`.
+
 .. option:: --hierarchical-child <block>
 
    Internal use only, for :vlopt:`--hierarchical`.

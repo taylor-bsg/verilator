@@ -8,11 +8,15 @@
 # SPDX-License-Identifier: LGPL-3.0-only OR Artistic-2.0
 
 import vltest_bootstrap
+import hier_block_check
 
 test.scenarios('simulator')
 
 test.compile(verilator_flags2=['--hierarchical'])
 
 test.execute()
+
+if test.vlt:
+    hier_block_check.check_libraries(test)
 
 test.passes()

@@ -162,6 +162,17 @@ Hierarchy blocks have some limitations, including:
 
 - Delays are not allowed in hierarchy blocks.
 
+- Type parameters that refer to structs, unions, or enums must use named
+  typedefs declared directly in a package or compilation-unit scope. Local
+  and anonymous declarations cannot preserve their type identity across
+  separate compilations and are rejected. Class and virtual-interface type
+  parameters are also unsupported at a hierarchy boundary.
+
+- A ``defparam`` may set a hierarchy boundary's own parameters or target
+  descendants within the same compiled library. A ``defparam`` crossing
+  into or out of a library's body is unsupported, because its assignment
+  cannot be applied in the separate compilation.
+
 But, the following usage is supported:
 
 - Nested hierarchy blocks. A hierarchy block may instantiate other
