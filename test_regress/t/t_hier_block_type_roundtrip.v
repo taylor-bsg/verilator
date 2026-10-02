@@ -9,15 +9,25 @@
 `define checkd(gotv,expv) do if ((gotv) !== (expv)) begin $write("%%Error: %s:%0d: %m got=%0d exp=%0d (%s !== %s)\n", `__FILE__, `__LINE__, (gotv), (expv), `"gotv`", `"expv`"); `stop; end while (0);
 // verilog_format: on
 
+// Ascending ranges are intentional. Generated type files and wrappers must
+// preserve them without requiring a global warning waiver in the driver.
+/*verilator lint_off ASCRANGE*/
+
 typedef struct packed signed {logic [6:0] bits;} signed_struct_t;
 typedef struct packed unsigned {logic [6:0] bits;} unsigned_struct_t;
 typedef logic [6:0] two_t[2];
 typedef logic [6:0] three_t[3];
 typedef logic [6:0] ascending_t[1:3];
 typedef logic [6:0] descending_t[3:1];
+typedef logic [0:6] ascending_element_t[1:3];
 typedef int dynamic_t[];
 typedef int queue_t[$:3];
 typedef int associative_t[string];
+
+package ranges_pkg;
+  typedef logic [0:7] ascending_t;
+  typedef logic [7:0] descending_t;
+endpackage
 
 module t (
     input clk
@@ -126,6 +136,88 @@ module t (
   ) u3 (
       .*
   );
+  checked_array #(
+      .T(ascending_element_t),
+      .LO(1),
+      .HI(3),
+      .ELEMENT_ASC(1),
+      .ID(15)
+  ) u4 (
+      .*
+  );
+  // Observe declared bounds and indexed bits, not just whole-vector arithmetic.
+  checked_range #(
+      .T(logic [0:6]),
+      .L(0),
+      .R(6),
+      .LOW_BIT(6),
+      .ID(1)
+  ) r0 (
+      .*
+  );
+  checked_range #(
+      .T(logic [6:0]),
+      .L(6),
+      .R(0),
+      .LOW_BIT(0),
+      .ID(2)
+  ) r1 (
+      .*
+  );
+  checked_range #(
+      .T(bit [1:4]),
+      .L(1),
+      .R(4),
+      .LOW_BIT(3),
+      .ID(3)
+  ) r2 (
+      .*
+  );
+  checked_range #(
+      .T(bit [4:1]),
+      .L(4),
+      .R(1),
+      .LOW_BIT(0),
+      .ID(4)
+  ) r3 (
+      .*
+  );
+  checked_range #(
+      .T(ranges_pkg::ascending_t),
+      .L(0),
+      .R(7),
+      .LOW_BIT(7),
+      .ID(5)
+  ) r4 (
+      .*
+  );
+  checked_range #(
+      .T(ranges_pkg::descending_t),
+      .L(7),
+      .R(0),
+      .LOW_BIT(0),
+      .ID(6)
+  ) r5 (
+      .*
+  );
+  checked_range #(
+      .T(logic [2:0][0:6]),
+      .L(0),
+      .R(6),
+      .LOW_BIT(6),
+      .ID(7)
+  ) r6 (
+      .*
+  );
+  checked_range #(
+      .T(logic [2:0][6:0]),
+      .L(6),
+      .R(0),
+      .LOW_BIT(0),
+      .ID(8)
+  ) r7 (
+      .*
+  );
   int names[6];
   int name_reference[6] = '{default: 0};
   localparam string N0 = $typename(
@@ -194,7 +286,7 @@ module t (
 `ifdef VERILATOR
       int model_threads;
       model_threads = $c("Verilated::threadContextp()->threadsInModels()");
-      `checkd(model_threads, `ROOT_THREADS + 20);
+      `checkd(model_threads, `ROOT_THREADS + 29);
 `endif
       $write("*-* All Finished *-*\n");
       $finish;
@@ -267,7 +359,8 @@ module checked_array #(
     parameter type T = two_t,
     parameter int LO = 0,
     HI = 1,
-    ID = 1
+    ID = 1,
+    parameter bit ELEMENT_ASC = 0
 ) (
     input clk
 );
@@ -287,7 +380,10 @@ module checked_array #(
   end
   always_comb begin
     expected = 0;
-    foreach (reference[i]) expected += reference[i] * (i + 1);
+    foreach (reference[i]) begin
+      expected += reference[i] * (i + 1);
+      expected += 17 * ((reference[i] >> (ELEMENT_ASC ? 6 : 0)) & 1);
+    end
   end
   always @(negedge clk) begin
     `checkd(out, expected);
@@ -314,6 +410,54 @@ module array_leaf #(
   end
   always_comb begin
     out = 0;
-    foreach (state[i]) out += int'(state[i]) * (i + 1);
+    foreach (state[i]) out += int'(state[i]) * (i + 1) + 17 * int'(state[i][0]);
+  end
+endmodule
+
+module checked_range #(
+    parameter type T = logic [6:0],
+    parameter int L = 6,
+    R = 0,
+    LOW_BIT = 0,
+    ID = 0
+) (
+    input clk
+);
+  int cycle = 0;
+  int data, low_bit, left_bound, right_bound;
+  int reference = 0;
+  localparam int MASK = (1 << $bits(T)) - 1;
+  assign data = cycle * 37 + ID * 53;
+  range_leaf #(.T(T)) dut (.*);
+  always @(posedge clk) reference <= (reference + data) & MASK;
+  always @(negedge clk) begin
+    `checkd(low_bit, (reference >> LOW_BIT) & 1);
+    `checkd(left_bound, L);
+    `checkd(right_bound, R);
+    cycle <= cycle + 1;
+  end
+endmodule
+
+module range_leaf #(
+    parameter type T = logic [6:0]
+) (
+    input clk,
+    input int data,
+    output int low_bit,
+    left_bound,
+    right_bound
+);
+  /*verilator hier_block*/
+  T state = 0;
+  always @(posedge clk) state <= T'(state + T'(data));
+  if ($dimensions(T) == 2) begin
+    assign low_bit = int'(state[$low(T, 1)][$low(T, 2)]);
+    assign left_bound = $left(T, 2);
+    assign right_bound = $right(T, 2);
+  end
+  else begin
+    assign low_bit = int'(state[$low(T)]);
+    assign left_bound = $left(T);
+    assign right_bound = $right(T);
   end
 endmodule

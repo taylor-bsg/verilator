@@ -599,7 +599,10 @@ class ParamProcessor final {
                 VL_DO_DANGLING(tdefp->deleteTree(), tdefp);
             } else {
                 const AstConst* const constp = VN_AS(it->second, Const);
-                value = "value:" + constp->num().ascii(true);
+                // Constant folding can leave signedness on the dtype rather than V3Number.
+                V3Number num{constp->num()};
+                if (!num.isOpaque()) num.isSigned(constp->isSigned());
+                value = "value:" + num.ascii(true);
             }
             // Length framing prevents names or string values from imitating a field boundary.
             recipe += cvtToStr(formal.first.size()) + ":" + formal.first;
@@ -1878,7 +1881,10 @@ class ParamProcessor final {
                 }
             }
         }
-        if (!any_overrides && VN_IS(nodep, Cell) && hasDescendantDefparams(srcModp)) {
+        // Cross-boundary defparams are rejected by LinkDot. A hierarchical block's local
+        // overrides are replayed in its child run, so it needs no per-instance clone.
+        if (!any_overrides && VN_IS(nodep, Cell) && !srcModp->hierBlock()
+            && hasDescendantDefparams(srcModp)) {
             longname += "__Vdefparam" + V3Hash{srcModp->someInstanceName()}.toString();
             any_overrides = true;
         }

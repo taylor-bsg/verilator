@@ -12,6 +12,8 @@ import hier_block_check
 
 test.scenarios('simulator')
 
+# Stale wrappers or call sites from another compiler must not satisfy the checks.
+test.clean_objs()
 test.compile(verilator_flags2=['--hierarchical'])
 
 test.execute()

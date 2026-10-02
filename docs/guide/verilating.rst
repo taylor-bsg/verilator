@@ -162,6 +162,14 @@ Hierarchy blocks have some limitations, including:
 
 - Delays are not allowed in hierarchy blocks.
 
+- Package and compilation-unit variables have separate storage in each
+  compiled library. Designs that require such state to be shared across
+  hierarchy boundaries are unsupported.
+
+- Overridden string parameters cannot contain newlines or double quotes,
+  because these characters cannot be transported through the generated
+  child-compilation arguments.
+
 - Type parameters that refer to structs, unions, or enums must use named
   typedefs declared directly in a package or compilation-unit scope. Local
   and anonymous declarations cannot preserve their type identity across

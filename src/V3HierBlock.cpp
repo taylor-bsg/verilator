@@ -154,8 +154,15 @@ V3HierBlock::StrGParams V3HierBlock::stringifyParams(const std::vector<AstVar*>&
                 s = constp->num().toString();
                 if (!forGOption) s = VString::quoteBackslash(s);
                 s = VString::quoteStringLiteralForShell(s);
+                // The -f reader strips comments before unquoting. Break both comment
+                // delimiters with escapes, which unquoting then removes.
+                s = VString::quoteAny(s, '/', '\\');
+                s = VString::quoteAny(s, '*', '\\');
             } else {  // Either signed or unsigned integer.
-                s = constp->num().ascii(true, true);
+                // Preserve the effective type after constant folding, as in the planning key.
+                V3Number num{constp->num()};
+                num.isSigned(constp->isSigned());
+                s = num.ascii(true, true);
                 s = VString::quoteAny(s, '\'', '\\');
             }
             strParams.emplace_back(gparam->name(), s);
@@ -294,6 +301,8 @@ void V3HierBlock::writeParametersFile(const V3EmitV::TypeEmitter& typeEmitter) c
     VHashSha512 hash{"type params"};
     const string moduleName = "Vhsh" + hash.digestSymbol24();
     const std::unique_ptr<std::ofstream> of{V3File::new_ofstream(typeParametersFilename())};
+    // These types were checked in the source RTL; preserve their declared range direction.
+    *of << "// verilator lint_save\n// verilator lint_off ASCRANGE\n";
     *of << "module " << moduleName << ";\n";
     for (AstParamTypeDType* const gparam : m_typeParams) {
         AstTypedef* tdefp
@@ -306,6 +315,7 @@ void V3HierBlock::writeParametersFile(const V3EmitV::TypeEmitter& typeEmitter) c
         VL_DO_DANGLING(tdefp->deleteTree(), tdefp);
     }
     *of << "endmodule\n\n";
+    *of << "// verilator lint_restore\n";
     *of << "`verilator_config\n";
     *of << "hier_params -module \"" << moduleName << "\"\n";
 }
@@ -374,13 +384,24 @@ class HierBlockUsageCollectVisitor final : public VNVisitorConst {
         // Record overridden value parameter of this hier block
         if (nodep->isGParam() && nodep->overriddenParam()) {
             UASSERT_OBJ(m_modp, nodep, "Value parameter not under module");
+            if (const AstConst* const constp = VN_CAST(nodep->valuep(), Const)) {
+                if (constp->isString()
+                    && constp->num().toString().find_first_of("\"\n") != string::npos) {
+                    // Argument-file tokenization and -G parsing cannot reproduce these bytes.
+                    constp->v3error("Unsupported: Hierarchical block string parameter "
+                                    << nodep->prettyNameQ()
+                                    << " containing a newline or double quote.");
+                }
+            }
             m_params.push_back(nodep);
         }
     }
     void visit(AstParamTypeDType* nodep) override {
         UASSERT_OBJ(m_modp, nodep, "Type parameter not under module");
         if (!m_modp->hierBlock()) return;
-        // Record type parameter of this hier block
+        // Local and generate-scope types are elaborated again from the child's own RTL.
+        if (!nodep->isGParam()) return;
+        // Record formal type parameters of this hier block.
         m_typeParams.push_back(nodep);
     }
 

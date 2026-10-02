@@ -164,6 +164,10 @@ class ProtectVisitor final : public VNVisitor {
                    "See instructions in your simulator for how"
                    " to use DPI libraries\n");
 
+        // Preserve declared port ranges without repeating warnings checked in the source RTL.
+        txtp->add("// verilator lint_save\n");
+        txtp->add("// verilator lint_off ASCRANGE\n");
+
         // Module declaration
         m_modPortsp = new AstTextBlock{fl, "module " + m_libName + " (\n", ", ", ");\n\n"};
         txtp->add(m_modPortsp);
@@ -307,6 +311,7 @@ class ProtectVisitor final : public VNVisitor {
         txtp->add("final " + m_libName + "_protectlib_final(handle__V);\n\n");
 
         txtp->add("endmodule\n");
+        txtp->add("// verilator lint_restore\n");
 
         configSection(modp, txtp, fl);
 

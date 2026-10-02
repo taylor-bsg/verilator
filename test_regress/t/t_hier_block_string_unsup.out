@@ -1,0 +1,26 @@
+%Error: t/t_hier_block_string_unsup.v:8:13: Unsupported: Hierarchical block string parameter 'S' containing a newline or double quote.
+                                          : ... note: In instance 't.newline_literal'
+    8 |   leaf #(.S("nl\nx")) newline_literal ();
+      |             ^~~~~~~
+        ... See the manual at https://verilator.org/verilator_doc.html?v=latest for more assistance.
+%Error: t/t_hier_block_string_unsup.v:9:13: Unsupported: Hierarchical block string parameter 'S' containing a newline or double quote.
+                                          : ... note: In instance 't.newline_expression'
+    9 |   leaf #(.S({"prefix", "\n", "suffix"})) newline_expression ();
+      |             ^
+%Error: t/t_hier_block_string_unsup.v:10:13: Unsupported: Hierarchical block string parameter 'S' containing a newline or double quote.
+                                           : ... note: In instance 't.quoted'
+   10 |   leaf #(.S("q\"t")) quoted ();
+      |             ^~~~~~
+%Error: t/t_hier_block_string_unsup.v:11:15: Unsupported: Hierarchical block string parameter 'S' containing a newline or double quote.
+                                           : ... note: In instance 't.nested'
+   11 |   middle #(.S("nested\nvalue")) nested ();
+      |               ^~~~~~~~~~~~~~~
+%Error: t/t_hier_block_string_unsup.v:27:13: Unsupported: Hierarchical block string parameter 'S' containing a newline or double quote.
+                                           : ... note: In instance 't.nested.child'
+   27 |   leaf #(.S({S, "!"})) child ();
+      |             ^
+%Error: t/t_hier_block_string_unsup.v:13:13: Unsupported: Hierarchical block string parameter 'S' containing a newline or double quote.
+                                           : ... note: In instance 't.converted'
+   13 |   leaf #(.S(16'h610a)) converted ();
+      |             ^~~~~~~~
+%Error: Exiting due to

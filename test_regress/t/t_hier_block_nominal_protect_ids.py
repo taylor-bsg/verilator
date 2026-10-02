@@ -14,6 +14,8 @@ test.scenarios('vlt_all')
 test.top_filename = 't/t_hier_block_type_nominal.v'
 test.sim_time = 1500
 threads = 2 if test.vltmt else 1
+# Stale wrappers or call sites from another compiler must not satisfy the checks.
+test.clean_objs()
 test.compile(
     verilator_flags2=['--hierarchical', '--protect-ids', '-DROOT_THREADS=' + str(threads)],
     threads=threads)

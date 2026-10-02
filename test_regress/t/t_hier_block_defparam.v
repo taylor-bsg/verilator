@@ -13,12 +13,15 @@ module t (
     input clk
 );
   int cycle = 0;
-  int data[4], result[4];
-  int reference[4] = '{default: 0};
+  int data[7], result[7];
+  int reference[7] = '{default: 0};
   assign data[0] = cycle * 7 + 1;
   assign data[1] = cycle * 11 + 2;
   assign data[2] = cycle * 13 + 3;
   assign data[3] = cycle * 17 + 4;
+  assign data[4] = cycle * 19 + 5;
+  assign data[5] = cycle * 23 + 6;
+  assign data[6] = cycle * 29 + 7;
   boundary a (
       clk,
       data[0],
@@ -41,21 +44,37 @@ module t (
   );
   // These set the boundary's own formal and must remain supported.
   defparam a.P = 2; defparam b.P = 3; defparam wrapped.inst.P = 5;
+  plain d (
+      clk,
+      data[4],
+      result[4]
+  );
+  plain e (
+      clk,
+      data[5],
+      result[5]
+  );
+  hier_container f (
+      clk,
+      data[6],
+      result[6]
+  );
 
   always @(posedge clk) begin
     reference[0] <= reference[0] + data[0] + 3;
     reference[1] <= reference[1] + data[1] + 4;
     reference[2] <= reference[2] + data[2] + 1;
     reference[3] <= reference[3] + data[3] + 6;
+    for (int i = 4; i < 7; ++i) reference[i] <= reference[i] + data[i] + 6;
   end
   always @(negedge clk) begin
     int model_threads;
-    for (int i = 0; i < 4; ++i) `checkd(result[i], reference[i]);
+    foreach (result[i]) `checkd(result[i], reference[i]);
     cycle <= cycle + 1;
     if (cycle == 100) begin
 `ifdef VERILATOR
       model_threads = $c("Verilated::threadContextp()->threadsInModels()");
-      `checkd(model_threads, `ROOT_THREADS + 4);
+      `checkd(model_threads, `ROOT_THREADS + 8);
 `endif
       $write("*-* All Finished *-*\n");
       $finish;
@@ -91,6 +110,30 @@ module boundary #(
   defparam child.N = P; defparam mid.child.N = 1;
   always @(posedge clk) state <= state + data + first + second;
   assign result = state;
+endmodule
+
+module plain (
+    input clk,
+    input int data,
+    output int result
+);
+  /*verilator hier_block*/
+  int first, second;
+  int state = 0;
+  leaf child (first);
+  middle plain_mid (second);
+  defparam child.N = 5; defparam plain_mid.child.N = 1;
+  always @(posedge clk) state <= state + data + first + second;
+  assign result = state;
+endmodule
+
+module hier_container (
+    input clk,
+    input int data,
+    output int result
+);
+  /*verilator hier_block*/
+  plain child (.*);
 endmodule
 
 module middle (

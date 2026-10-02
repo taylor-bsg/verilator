@@ -12,12 +12,16 @@ import hier_block_check
 
 test.scenarios('vlt_all')
 test.sim_time = 2000
-test.top_filename = 't/t_hier_block_specialize.v'
-threads = 2 if test.vltmt else 1
-# Stale wrappers or call sites from another compiler must not satisfy the checks.
+test.top_filename = 't/t_hier_block_string.v'
 test.clean_objs()
-test.compile(verilator_flags2=['--hierarchical', '-DROOT_THREADS=' + str(threads), '--trace'],
-             threads=threads)
+threads = 2 if test.vltmt else 1
+# CMake forwards its thread setting to the child compilations.
+test.compile(verilator_flags2=[
+    '--hierarchical', '-DROOT_THREADS=' + str(threads), '-DCHILD_THREADS=' + str(threads)
+],
+             threads=threads,
+             verilator_make_gmake=False,
+             verilator_make_cmake=True)
 test.execute()
 hier_block_check.check_libraries(test)
 test.passes()

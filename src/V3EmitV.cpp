@@ -1044,10 +1044,11 @@ class EmitVBaseVisitorConst VL_NOT_FINAL : public VNVisitorConst {
             iterateAndNextConstNull(nodep->rangep());
             puts(" ");
         } else if (nodep->isRanged()) {
+            // Preserve declaration order after widthing has removed the range node.
             puts(" [");
-            puts(cvtToStr(nodep->hi()));
+            puts(cvtToStr(nodep->left()));
             puts(":");
-            puts(cvtToStr(nodep->lo()));
+            puts(cvtToStr(nodep->right()));
             puts("] ");
         }
     }
@@ -1176,7 +1177,6 @@ class EmitVBaseVisitorConst VL_NOT_FINAL : public VNVisitorConst {
         if (m_arrayPost) return;
         puts(nodep->verilogKwd() + " ");
         if (nodep->packed()) puts("packed ");
-        if (nodep->isSigned()) puts("signed ");
         {
             puts("{\n");
             VL_RESTORER_CLEAR(m_packedps);
@@ -1190,12 +1190,9 @@ class EmitVBaseVisitorConst VL_NOT_FINAL : public VNVisitorConst {
     }
     void visit(AstMemberDType* nodep) override {
         if (m_arrayPost) return;
-        VL_RESTORER(m_arrayPost);
         iterateConst(nodep->subDTypep());
         puts(" ");
         puts(nodep->name());
-        m_arrayPost = true;
-        iterateConst(nodep->subDTypep());
         puts(";\n");
     }
     void visit(AstQueueDType* nodep) override {

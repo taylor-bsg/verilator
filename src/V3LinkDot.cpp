@@ -209,6 +209,7 @@ private:
     std::array<ScopeAliasMap, SAMN__MAX> m_scopeAliasMap;  // Map of <lhs,rhs> aliases
     std::vector<VSymEnt*> m_ifaceVarSyms;  // List of AstIfaceRefDType's to be imported
     IfaceModSyms m_ifaceModSyms;  // List of AstIface+Symbols to be processed
+    std::set<const AstNodeModule*> m_hierBlockModules;  // Boundaries before LinkResolve
     const VLinkDotStep m_step;  // Operational step
 
 public:
@@ -275,6 +276,9 @@ public:
     bool forPrimary() const { return m_step == LDS_PRIMARY; }
     bool forParamed() const { return m_step == LDS_PARAMED; }
     bool forScopeCreation() const { return m_step == LDS_SCOPED; }
+    void addHierBlock(const AstNodeModule* modp) { m_hierBlockModules.emplace(modp); }
+    bool hasHierBlocks() const { return !m_hierBlockModules.empty(); }
+    bool isHierBlock(const AstNodeModule* modp) const { return m_hierBlockModules.count(modp); }
 
     // METHODS
     static string nodeTextType(AstNode* nodep) {
@@ -2046,7 +2050,8 @@ class LinkDotFindVisitor final : public VNVisitor {
         UASSERT_OBJ(m_curSymp, nodep, "Parameter type not under module/package/$unit");
 
         // Replace missing param types with provided hierarchical type params.
-        if (!m_hierParamsName.empty() && m_modSymp->nodep() == v3Global.rootp()->topModulep()) {
+        if (!m_hierParamsName.empty() && nodep->isGParam()
+            && m_modSymp->nodep() == v3Global.rootp()->topModulep()) {
             if (const VSymEnt* const typedefEntp = m_curSymp->findIdFallback(m_hierParamsName)) {
                 const AstModule* modp = VN_CAST(typedefEntp->nodep(), Module);
 
@@ -2312,6 +2317,17 @@ class LinkDotFindVisitor final : public VNVisitor {
         iterateAndNextNull(nodep->filterp());
     }
 
+    void visit(AstPragma* nodep) override {  // FindVisitor::
+        if (v3Global.opt.hierarchical() && nodep->pragType() == VPragmaType::HIER_BLOCK) {
+            UASSERT_OBJ(m_modSymp, nodep, "Hierarchical block pragma outside module");
+            const AstCell* const cellp = VN_CAST(m_modSymp->nodep(), Cell);
+            const AstNodeModule* const modp
+                = cellp ? cellp->modp() : VN_AS(m_modSymp->nodep(), NodeModule);
+            // Record every boundary before the subsequent visitor resolves defparams.
+            // LinkResolve sets hierBlock() later, after defparams have been removed.
+            if (modp != v3Global.rootp()->topModulep()) m_statep->addHierBlock(modp);
+        }
+    }
     void visit(AstNode* nodep) override { iterateChildren(nodep); }  // FindVisitor::
 
     void handleUnvisitedVirtIfaces() {
@@ -2445,10 +2461,9 @@ class LinkDotParamVisitor final : public VNVisitor {
     // STATE
     LinkDotState* const m_statep;  // State to pass between visitors, including symbol table
     AstNodeModule* m_modp = nullptr;  // Current module
-    std::set<const AstNodeModule*> m_hierBlockModules;  // Boundaries before LinkResolve
 
     const AstNodeModule* crossedHierBlock(const VSymEnt* sourcep, const VSymEnt* targetp) const {
-        if (m_hierBlockModules.empty()) return nullptr;
+        if (!m_statep->hasHierBlocks()) return nullptr;
         std::set<const VSymEnt*> sourceScopes;
         for (const VSymEnt* scopep = sourcep; scopep; scopep = scopep->parentp()) {
             sourceScopes.insert(scopep);
@@ -2461,7 +2476,7 @@ class LinkDotParamVisitor final : public VNVisitor {
         const auto boundary = [&](const VSymEnt* scopep) -> const AstNodeModule* {
             const AstCell* const cellp = VN_CAST(scopep->nodep(), Cell);
             const AstNodeModule* const modp = cellp ? cellp->modp() : nullptr;
-            return m_hierBlockModules.count(modp) ? modp : nullptr;
+            return m_statep->isHierBlock(modp) ? modp : nullptr;
         };
         for (const VSymEnt* scopep = targetp->parentp(); scopep && scopep != commonp;
              scopep = scopep->parentp()) {
@@ -2663,19 +2678,6 @@ public:
     LinkDotParamVisitor(AstNetlist* rootp, LinkDotState* statep)
         : m_statep{statep} {
         UINFO(4, __FUNCTION__ << ": ");
-        if (v3Global.opt.hierarchical()) {
-            // LinkResolve marks the modules after this pass has removed defparams. Inspect
-            // the pragmas here while both the origin and resolved target scopes are known.
-            for (AstNodeModule* modp = rootp->modulesp(); modp;
-                 modp = VN_AS(modp->nextp(), NodeModule)) {
-                if (modp == rootp->topModulep()) continue;
-                modp->foreach([&](const AstPragma* pragp) {
-                    if (pragp->pragType() == VPragmaType::HIER_BLOCK) {
-                        m_hierBlockModules.insert(modp);
-                    }
-                });
-            }
-        }
         iterate(rootp);
     }
     ~LinkDotParamVisitor() override = default;
