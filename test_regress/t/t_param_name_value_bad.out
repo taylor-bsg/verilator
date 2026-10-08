@@ -1,0 +1,65 @@
+%Error: t/t_param_name_value_bad.v:37:24: Expecting expression to be constant, but variable isn't const: 'x'
+                                        : ... note: In instance 't'
+   37 |   m_var #(.P(3'd5), .N(x)) i_var ();   
+      |                        ^
+        ... See the manual at https://verilator.org/verilator_doc.html?v=latest for more assistance.
+%Error: t/t_param_name_value_bad.v:37:22: Can't convert defparam value to constant: Param 'N' of 'i_var'
+                                        : ... note: In instance 't'
+   37 |   m_var #(.P(3'd5), .N(x)) i_var ();   
+      |                      ^
+%Error: t/t_param_name_value_bad.v:30:23: Expecting expression to be constant, but can't convert a RAND to constant.
+   30 |     parameter int N = $random,
+      |                       ^~~~~~~
+%Warning-WIDTHEXPAND: t/t_param_name_value_bad.v:11:19: Operator VAR 'N' expects 32 bits on the Initial value, but Initial value's CONST '?1?h0' generates 1 bits.
+                                                      : ... note: In instance 't.i_var'
+   11 |     parameter int N = 1,
+      |                   ^
+                      ... For warning description see https://verilator.org/warn/WIDTHEXPAND?v=latest
+                      ... Use "/* verilator lint_off WIDTHEXPAND */" and lint_on around source to disable this message.
+%Warning-WIDTHTRUNC: t/t_param_name_value_bad.v:12:27: Operator VAR 'P' expects 1 bits on the Initial value, but Initial value's CONST '3'h5' generates 3 bits.
+                                                     : ... note: In instance 't.i_var'
+   12 |     parameter logic [N:0] P = '0
+      |                           ^
+                     ... For warning description see https://verilator.org/warn/WIDTHTRUNC?v=latest
+                     ... Use "/* verilator lint_off WIDTHTRUNC */" and lint_on around source to disable this message.
+%Error: t/t_param_name_value_bad.v:17:19: Parameter without default value is never given value (IEEE 1800-2023 6.20.1): 'N'
+                                        : ... note: In instance 't.i_none'
+   17 |     parameter int N,
+      |                   ^
+%Error: t/t_param_name_value_bad.v:18:22: Expecting expression to be constant, but variable isn't const: 'N'
+                                        : ... note: In instance 't.i_none'
+   18 |     parameter logic [N:0] P = '0
+      |                      ^
+%Error: t/t_param_name_value_bad.v:18:22: left side of bit range isn't a two-state constant (IEEE 1800-2023 6.9.1)
+                                        : ... note: In instance 't.i_none'
+   18 |     parameter logic [N:0] P = '0
+      |                      ^
+%Warning-WIDTHTRUNC: t/t_param_name_value_bad.v:18:27: Operator VAR 'P' expects 2 bits on the Initial value, but Initial value's CONST '3'h5' generates 3 bits.
+                                                     : ... note: In instance 't.i_none'
+   18 |     parameter logic [N:0] P = '0
+      |                           ^
+%Error: t/t_param_name_value_bad.v:24:19: Variable's initial value is circular: 'B'
+                                        : ... note: In instance 't.i_cycle'
+   24 |     parameter int B = A,
+      |                   ^
+%Warning-WIDTHEXPAND: t/t_param_name_value_bad.v:23:19: Operator VAR 'A' expects 32 bits on the Initial value, but Initial value's VARREF 'B' generates 1 bits.
+                                                      : ... note: In instance 't.i_cycle'
+   23 |     parameter int A = B,
+      |                   ^
+%Warning-WIDTHTRUNC: t/t_param_name_value_bad.v:25:27: Operator VAR 'P' expects 1 bits on the Initial value, but Initial value's CONST '3'h5' generates 3 bits.
+                                                     : ... note: In instance 't.i_cycle'
+   25 |     parameter logic [A:0] P = '0
+      |                           ^
+%Error: t/t_param_name_value_bad.v:31:22: Expecting expression to be constant, but variable isn't const: 'N'
+                                        : ... note: In instance 't.i_rand'
+   31 |     parameter logic [N:0] P = '0
+      |                      ^
+%Error: t/t_param_name_value_bad.v:31:22: left side of bit range isn't a two-state constant (IEEE 1800-2023 6.9.1)
+                                        : ... note: In instance 't.i_rand'
+   31 |     parameter logic [N:0] P = '0
+      |                      ^
+%Warning-WIDTHTRUNC: t/t_param_name_value_bad.v:31:27: Operator VAR 'P' expects 2 bits on the Initial value, but Initial value's CONST '3'h5' generates 3 bits.
+                                                     : ... note: In instance 't.i_rand'
+   31 |     parameter logic [N:0] P = '0
+      |                           ^
+%Error: Exiting due to
