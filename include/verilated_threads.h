@@ -287,8 +287,9 @@ private:
 
 public:
     // CONSTRUCTORS
-    VlExecGraph(const Vertex* verticesp, uint32_t nVertices, const Edge* edgesp, uint32_t nEdges,
-                size_t nTriggerWords, Fnp dispatchp)
+    // Constexpr, so the generated graphs are ready before any dynamic initialization
+    constexpr VlExecGraph(const Vertex* verticesp, uint32_t nVertices, const Edge* edgesp,
+                          uint32_t nEdges, size_t nTriggerWords, Fnp dispatchp)
         : m_verticesp{verticesp}
         , m_nVertices{nVertices}
         , m_edgesp{edgesp}

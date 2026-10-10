@@ -61,10 +61,12 @@ class EmitCExecGraph final : public EmitCFunc {
 
         // The MTasks
         puts("\n");
-        putns(nodep, "static const VlExecGraph::Vertex " + name + "__vertices[] = {\n");
+        putns(nodep, "static VL_CONSTINIT_CXX20 const VlExecGraph::Vertex " + name
+                         + "__vertices[] = {\n");
         AstVarRef* maskp = nodep->maskps();
         for (const AstCCall* callp = nodep->callsp(); callp;
              callp = VN_AS(callp->nextp(), CCall)) {
+            UASSERT_OBJ(maskp, callp, "MTask call without trigger mask");
             putns(callp, "{&" + funcNameProtect(callp->funcp()) + ", ");
             puts(std::to_string(mtaskps.at(callp->funcp())->cost()) + ", ");
             iterateConst(maskp);
@@ -78,7 +80,10 @@ class EmitCExecGraph final : public EmitCFunc {
         for (const AstCCall* callp = nodep->callsp(); callp;
              callp = VN_AS(callp->nextp(), CCall)) {
             for (const V3GraphEdge& edge : mtaskps.at(callp->funcp())->outEdges()) {
-                if (!nEdges) puts("static const VlExecGraph::Edge " + name + "__edges[] = {\n");
+                if (!nEdges) {
+                    puts("static VL_CONSTINIT_CXX20 const VlExecGraph::Edge " + name
+                         + "__edges[] = {\n");
+                }
                 puts("{" + std::to_string(indices.at(callp->funcp())) + ", "
                      + std::to_string(indices.at(edge.top()->as<ExecMTask>()->funcp())) + "},\n");
                 ++nEdges;
@@ -88,7 +93,7 @@ class EmitCExecGraph final : public EmitCFunc {
 
         // The graph
         const std::string edgesName = nEdges ? name + "__edges" : "nullptr";
-        putns(nodep, "VlExecGraph " + name + "{");
+        putns(nodep, "VL_CONSTINIT_CXX20 VlExecGraph " + name + "{");
         puts(name + "__vertices, " + std::to_string(indices.size()) + ", ");
         puts(edgesName + ", " + std::to_string(nEdges) + ", ");
         puts(std::to_string(trigDtypep->elementsConst()) + ", ");
