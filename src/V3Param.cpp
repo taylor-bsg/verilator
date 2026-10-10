@@ -1596,6 +1596,20 @@ class ParamProcessor final {
                                 if (patp && !patp->childDTypep() && targetp->childDTypep()) {
                                     patp->childDTypep(targetp->childDTypep()->cloneTree(false));
                                 }
+                                // A value as the parameter holds it, when its declared type is
+                                // literal, such as logic [7:0]; another type could depend on
+                                // something the instance changes
+                                AstBasicDType* const basicp
+                                    = VN_CAST(targetp->childDTypep(), BasicDType);
+                                if (replacep && !patp && basicp && !basicp->implicit()
+                                    && !basicp->exists([](const AstNode* np) {
+                                           return !VN_IS(np, BasicDType) && !VN_IS(np, Range)
+                                                  && !VN_IS(np, Const);
+                                       })) {
+                                    replacep = new AstCast{
+                                        replacep->fileline(), VN_AS(replacep, NodeExpr),
+                                        VFlagChildDType{}, basicp->cloneTree(false)};
+                                }
                                 if (replacep) {
                                     varrefp->replaceWith(replacep);
                                     VL_DO_DANGLING(varrefp->deleteTree(), varrefp);
@@ -1631,12 +1645,15 @@ class ParamProcessor final {
                             }
                             if (!any) break;
                         }
-                        // Bail if anything still points at the template.
-                        cloneVarp->foreach([&](AstVarRef* varrefp) {
-                            varrefp->v3fatalSrc(
-                                "Unresolved VarRef '"
-                                << varrefp->prettyName() << "' in pin dtype clone.  Pin: "
-                                << pinp->prettyNameQ() << " of " << nodep->prettyNameQ());
+                        // A reference left, as to a variable or around a cycle, or to an enum
+                        // item of the template, can't be evaluated here
+                        if (cloneVarp->exists([](const AstVarRef*) { return true; })) {
+                            cloneVarpUnresolved = true;
+                        }
+                        cloneVarp->foreach([&](AstEnumItemRef* refp) {
+                            if (V3LinkDotIfaceCapture::findOwnerModule(refp->itemp()) == srcModp) {
+                                cloneVarpUnresolved = true;
+                            }
                         });
                         // Skip the widthing constify if any RefDType is unresolved.
                         cloneVarp->foreach([&](AstRefDType* refp) {
