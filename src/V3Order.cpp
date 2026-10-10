@@ -104,6 +104,7 @@ AstCFunc* V3Order::order(AstNetlist* netlistp,  //
                          const V3Order::TrigToSenMap& trigToSen,
                          const V3Sched::CovergroupRefBindings& cgRefBindings,
                          const string& tag,  //
+                         AstVarScope* trigVscp,  //
                          bool parallel,  //
                          bool slow,  //
                          const ExternalDomainsProvider& externalDomains) {
@@ -123,7 +124,7 @@ AstCFunc* V3Order::order(AstNetlist* netlistp,  //
     AstNodeStmt* stmtsp = nullptr;
     if (!moveGraphp->empty()) {
         if (parallel) {
-            stmtsp = createParallel(*moveGraphp, tag, slow);
+            stmtsp = createParallel(*moveGraphp, tag, trigVscp, slow);
         } else {
             stmtsp = createSerial(*moveGraphp, tag, slow);
         }

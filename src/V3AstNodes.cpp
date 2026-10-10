@@ -786,6 +786,7 @@ void AstCFunc::dump(std::ostream& str) const {
     if (needProcess()) str << " [NPRC]";
     if (entryPoint()) str << " [ENTRY]";
     if (noLife()) str << " [NOLIFE]";
+    if (voidSelf()) str << " [VOIDSELF]";
     if (isConst().isKnown()) str << (isConst().trueKnown() ? " [CONST]" : " [!CONST]");
     if (m_cost) str << " cost=" << m_cost;
     if (!m_rtnType.empty()) str << " rt=" << m_rtnType;
@@ -809,6 +810,7 @@ void AstCFunc::dumpJson(std::ostream& str) const {
     dumpJsonBoolFuncIf(str, isCoroutine);
     dumpJsonBoolFuncIf(str, needProcess);
     dumpJsonBoolFuncIf(str, noLife);
+    dumpJsonBoolFuncIf(str, voidSelf);
     dumpJsonStr(str, "isConst", isConst().ascii());
     dumpJsonNum(str, "cost", m_cost);
     dumpJsonStr(str, "ifdef", ifdef());
@@ -1660,12 +1662,17 @@ AstNodeBiop* AstEqWild::newTyped(FileLine* fl, AstNodeExpr* lhsp, AstNodeExpr* r
         return new AstEqWild{fl, lhsp, rhsp};
     }
 }
-AstExecGraph::AstExecGraph(FileLine* fileline, const string& name) VL_MT_DISABLED
+AstExecGraph::AstExecGraph(FileLine* fileline, const string& name,
+                           AstVarScope* trigVscp) VL_MT_DISABLED
     : ASTGEN_SUPER_ExecGraph(fileline),
       m_depGraphp{new V3Graph},
-      m_name{name} {}
+      m_name{name} {
+    // Null only in self tests, which never emit the graph
+    if (trigVscp) triggerp(new AstVarRef{fileline, trigVscp, VAccess::READ});
+}
 const char* AstExecGraph::broken() const {
     BROKEN_RTN(!m_depGraphp);
+    BROKEN_RTN(!triggerp());
     for (const V3GraphVertex& vtx : m_depGraphp->vertices()) {
         const ExecMTask* const mtaskp = vtx.as<ExecMTask>();
         const AstCFunc* const funcp = mtaskp->funcp();

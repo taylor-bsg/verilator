@@ -49,6 +49,7 @@ AstCFunc* order(AstNetlist* netlistp,  //
                 const TrigToSenMap& trigToSen,  //
                 const V3Sched::CovergroupRefBindings& cgRefBindings,  //
                 const string& tag,  //
+                AstVarScope* trigVscp,  //
                 bool parallel,  //
                 bool slow,  //
                 const ExternalDomainsProvider& externalDomains) VL_MT_DISABLED;

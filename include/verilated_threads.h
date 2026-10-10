@@ -259,46 +259,54 @@ private:
 //=============================================================================
 // VlExecGraph
 
-/// Static description of a multithreaded exec graph, generated as constant data.
-/// 'T_Self' is the class of the model's top module, which the MTask and dispatch
-/// functions take as argument.
-template <typename T_Self>
-struct VlExecGraph final {
+// Static description of a multithreaded exec graph, emitted by Verilator
+class VlExecGraph final {
+public:
     // TYPES
-    using Fnp = void (*)(T_Self*);  ///< MTask or dispatch function
-    /// Bits of one word of the trigger vector
-    struct Mask final {
-        uint32_t m_word;  ///< Index of the word in the trigger vector
-        QData m_bits;  ///< Bits of the word
-    };
-    /// An MTask, which needs to run when any bit of its trigger masks is set
+    using Fnp = void (*)(VlSelfP);  // Function taking the model's root instance
     struct Vertex final {
-        Fnp m_fnp;  ///< Function running the MTask
-        uint32_t m_cost;  ///< Estimated cost of the MTask
-        uint32_t m_firstMask;  ///< Index of the first trigger mask of the MTask in m_masksp
-        uint32_t m_nMasks;  ///< Number of trigger masks of the MTask
+        Fnp m_fnp;  // MTask body
+        uint64_t m_staticCost;  // Static cost estimate
+        const QData* m_maskp;  // Trigger bits the MTask tests, one word per trigger word
     };
-    /// A dependency between two MTasks
     struct Edge final {
-        uint32_t m_from;  ///< Index in m_verticesp of the MTask that runs first
-        uint32_t m_to;  ///< Index in m_verticesp of the MTask that depends on it
+        uint32_t m_from;  // Index of the MTask that runs first
+        uint32_t m_to;  // Index of the MTask that depends on it
     };
 
+private:
     // MEMBERS
-    Fnp m_dispatchp;  ///< Runs the graph on the thread pool, as scheduled by Verilator
-    const Vertex* m_verticesp;  ///< MTasks, in a topological order
-    uint32_t m_nVertices;  ///< Number of MTasks
-    const Mask* m_masksp;  ///< Trigger masks of all MTasks
-    const Edge* m_edgesp;  ///< Dependencies between MTasks
-    uint32_t m_nEdges;  ///< Number of dependencies
+    const Vertex* const m_verticesp;  // MTasks, in a topological order
+    const uint32_t m_nVertices;  // Number of MTasks
+    const Edge* const m_edgesp;  // Dependencies between MTasks
+    const uint32_t m_nEdges;  // Number of dependencies
+    const size_t m_nTriggerWords;  // Number of trigger words for MTasks
+    const Fnp m_dispatchp;  // Runs the graph on the thread pool, as scheduled by Verilator
+
+    VL_UNCOPYABLE(VlExecGraph);
+
+public:
+    // CONSTRUCTORS
+    VlExecGraph(const Vertex* verticesp, uint32_t nVertices, const Edge* edgesp, uint32_t nEdges,
+                size_t nTriggerWords, Fnp dispatchp)
+        : m_verticesp{verticesp}
+        , m_nVertices{nVertices}
+        , m_edgesp{edgesp}
+        , m_nEdges{nEdges}
+        , m_nTriggerWords{nTriggerWords}
+        , m_dispatchp{dispatchp} {}
+
+    // ACCESSORS
+    const Vertex* verticesp() const { return m_verticesp; }
+    uint32_t nVertices() const { return m_nVertices; }
+    const Edge* edgesp() const { return m_edgesp; }
+    uint32_t nEdges() const { return m_nEdges; }
+    size_t nTriggerWords() const { return m_nTriggerWords; }
+    Fnp dispatchp() const { return m_dispatchp; }
 };
 
-/// Run an exec graph, when the trigger vector holds the given words.
-/// Only the thread evaluating the model may call this.
-template <typename T_Self>
-inline void vl_invokeExecGraph(const VlExecGraph<T_Self>& graph, T_Self* selfp,
-                               const QData* /*triggersp*/) VL_MT_UNSAFE {
-    graph.m_dispatchp(selfp);
-}
+// Run 'graph' for the model's root instance 'selfp', when the trigger vector holds the
+// words 'triggersp'. Only the thread evaluating the model may call this.
+void vl_invokeExecGraph(VlExecGraph& graph, VlSelfP selfp, const QData* triggersp) VL_MT_UNSAFE;
 
 #endif

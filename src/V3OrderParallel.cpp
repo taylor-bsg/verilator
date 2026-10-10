@@ -198,26 +198,10 @@ public:
 };
 
 //######################################################################
-// Trigger vector of a graph
-
-// Record in 'execGraphp' the trigger vector whose bits select the logic of 'domainp'. All logic
-// of one graph is selected by the bits of one trigger vector.
-static void addTriggerVector(AstExecGraph* execGraphp, const AstSenTree* domainp) {
-    domainp->foreach([&](const AstVarRef* refp) {
-        if (!execGraphp->triggersp()) {
-            execGraphp->triggersp(
-                new AstVarRef{execGraphp->fileline(), refp->varScopep(), VAccess::READ});
-        }
-        UASSERT_OBJ(VN_AS(execGraphp->triggersp(), VarRef)->varScopep() == refp->varScopep(), refp,
-                    "Logic of one graph should be selected by one trigger vector");
-    });
-}
-
-//######################################################################
 // Entry point
 
 AstNodeStmt* V3Order::createParallel(OrderMoveGraph& moveGraph, const std::string& tag,
-                                     bool slow) {
+                                     AstVarScope* trigVscp, bool slow) {
     UINFO(2, "  Constructing parallel code for '" + tag + "'");
 
     // For nondeterminism debugging
@@ -256,7 +240,7 @@ AstNodeStmt* V3Order::createParallel(OrderMoveGraph& moveGraph, const std::strin
     // Create the AstExecGraph node which represents the execution of the MTask graph.
     FileLine* const flp = v3Global.rootp()->fileline();
     AstScope* const scopep = v3Global.rootp()->topScopep()->scopep();
-    AstExecGraph* const execGraphp = new AstExecGraph{flp, tag};
+    AstExecGraph* const execGraphp = new AstExecGraph{flp, tag, trigVscp};
     V3Graph* const depGraphp = execGraphp->depGraphp();
 
     // Translate the LogicMTask graph into the corresponding ExecMTask graph,
@@ -299,7 +283,6 @@ AstNodeStmt* V3Order::createParallel(OrderMoveGraph& moveGraph, const std::strin
                 OrderMoveDomScope* const domScopep = &mVtxp->domScope();
                 if (domScopep != prevDomScopep) emitter.forceNewFunction();
                 prevDomScopep = domScopep;
-                addTriggerVector(execGraphp, logicp->domainp());
                 // Emit the logic under this vertex
                 emitter.emitLogic(logicp);
             }
@@ -322,7 +305,7 @@ AstNodeStmt* V3Order::createParallel(OrderMoveGraph& moveGraph, const std::strin
         // The order they are created here happens to be just such an order.
         AstCCall* const callp = new AstCCall{flp, execMTaskp->funcp()};
         callp->dtypeSetVoid();
-        execGraphp->addStmtsp(callp->makeStmt());
+        execGraphp->addCallsp(callp);
 
         // Add the dependency edges between ExecMTasks
         for (const V3GraphEdge& edge : mTaskp->inEdges()) {

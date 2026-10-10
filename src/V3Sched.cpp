@@ -426,7 +426,7 @@ void createSettle(AstNetlist* netlistp, AstCFunc* const initFuncp, SenExprBuilde
 
     // Create and the body function
     AstCFunc* const stlFuncp = V3Order::order(
-        netlistp, {&comb, &hybrid}, trigToSen, cgRefBindings, "stl", false, true,
+        netlistp, {&comb, &hybrid}, trigToSen, cgRefBindings, "stl", trigKit.vscp(), false, true,
         [=](const AstVarScope*, std::vector<AstSenTree*>& out) { out.push_back(inputChanged); });
     util::splitCheck(stlFuncp);
 
@@ -553,7 +553,7 @@ void createIcoRegion(AstNetlist* netlistp, AstCFunc* const initFuncp,
 
     // Create and Order the body function
     AstCFunc* const icoFuncp = V3Order::order(
-        netlistp, {&logic}, trigToSen, cgRefBindings, "ico", false, false,
+        netlistp, {&logic}, trigToSen, cgRefBindings, "ico", trigKit.vscp(), false, false,
         [&](const AstVarScope* vscp, std::vector<AstSenTree*>& out) {
             AstVar* const varp = vscp->varp();
             // If it has an explicit change detect trigger, use that,
@@ -1012,7 +1012,7 @@ void schedule(AstNetlist* netlistp) {
 
     AstCFunc* const actFuncp = V3Order::order(
         netlistp, {&logicRegions.m_pre, &logicRegions.m_act, &logicReplicas.m_act}, trigToSenAct,
-        cgRefBindings, "act", false, false,
+        cgRefBindings, "act", trigKit.vscp(), false, false,
         [&](const AstVarScope* vscp, std::vector<AstSenTree*>& out) {
             auto it = actTimingDomains.find(vscp);
             if (it != actTimingDomains.end()) out = it->second;
@@ -1050,7 +1050,7 @@ void schedule(AstNetlist* netlistp) {
 
         const auto& timingDomains = timingKit.remapDomains(trigMap);
         AstCFunc* const funcp = V3Order::order(
-            netlistp, logic, trigToSen, cgRefBindings, name,
+            netlistp, logic, trigToSen, cgRefBindings, name, trigVscp,
             name == "nba" && v3Global.opt.mtasks(), false,
             [&](const AstVarScope* vscp, std::vector<AstSenTree*>& out) {
                 auto it = timingDomains.find(vscp);

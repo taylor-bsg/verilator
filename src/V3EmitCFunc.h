@@ -88,6 +88,13 @@ class EmitCLazyDecls final : public VNVisitorConst {
         if (EmitCParentModule::get(varp)->isConstPool()) lazyDeclareConstPoolVar(varp);
     }
 
+    void visit(AstExecGraph* nodep) override {
+        // The graph is defined in the ExecGraph file. Its children are referenced only there.
+        if (!declaredOnce(nodep)) return;
+        m_emitter.putns(nodep, "extern VlExecGraph " + EmitCUtil::execGraphName(nodep) + ";\n");
+        m_needsBlankLine = true;
+    }
+
     void visit(AstNode* nodep) override { iterateChildrenConst(nodep); }
 
 public:
@@ -429,6 +436,11 @@ public:
             m_lazyDecls.declared(nodep);  // Defined here, so no longer needs declaration
             if (!nodep->isStatic()) {  // Standard prologue
                 m_useSelfForThis = true;
+                if (nodep->voidSelf()) {
+                    const string className = EmitCUtil::prefixNameProtect(m_modp);
+                    puts(className + "* const vlSelf = static_cast<" + className
+                         + "*>(voidSelf);\n");
+                }
                 if (!VN_IS(m_modp, Class)) {
                     puts(EmitCUtil::symClassAssign());  // Uses vlSelf
                 } else {
@@ -1933,8 +1945,10 @@ public:
     }
     void visit(AstExecGraph* nodep) override {
         // The location of the AstExecGraph within the containing AstCFunc is where we want to
-        // invoke the graph and wait for it to complete. Emitting the children does just that.
-        iterateChildrenConst(nodep);
+        // invoke the graph and wait for it to complete. The run-time library does just that.
+        putns(nodep, "vl_invokeExecGraph(" + EmitCUtil::execGraphName(nodep) + ", vlSelf, ");
+        iterateConst(nodep->triggerp());
+        puts(".data());\n");
     }
 
     // Default
