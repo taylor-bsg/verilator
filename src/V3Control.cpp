@@ -225,6 +225,7 @@ class V3ControlModule final {
     V3Control::FsmRegisterWrapper m_fsmRegisterWrapper;  // FSM wrapper descriptor
     std::unordered_set<std::string> m_coverageOffBlocks;  // List of block names for coverage_off
     std::set<VPragmaType> m_modPragmas;  // List of Pragmas for modules
+    std::vector<V3Control::ThreadsUnitWorkers> m_threadsUnitWorkers;  // Instance/worker mappings
     bool m_hasFsmRegisterWrapper = false;  // Whether descriptor has been set
     bool m_inline = false;  // Whether to force the inline
     bool m_inlineValue = false;  // The inline value (on/off)
@@ -237,6 +238,8 @@ public:
         m_params.update(m.m_params);
         m_ports.update(m.m_ports);
         m_vars.update(m.m_vars);
+        m_threadsUnitWorkers.insert(m_threadsUnitWorkers.end(), m.m_threadsUnitWorkers.begin(),
+                                    m.m_threadsUnitWorkers.end());
         if (m.m_hasFsmRegisterWrapper) {
             m_fsmRegisterWrapper = m.m_fsmRegisterWrapper;
             m_hasFsmRegisterWrapper = true;
@@ -275,6 +278,12 @@ public:
         return m_hasFsmRegisterWrapper ? &m_fsmRegisterWrapper : nullptr;
     }
     void addModulePragma(VPragmaType pragma) { m_modPragmas.insert(pragma); }
+    void addThreadsUnitWorkers(const V3Control::ThreadsUnitWorkers& mapping) {
+        m_threadsUnitWorkers.push_back(mapping);
+    }
+    const std::vector<V3Control::ThreadsUnitWorkers>& threadsUnitWorkers() const {
+        return m_threadsUnitWorkers;
+    }
 
     void apply(AstNodeModule* modp) {
         if (m_inline) {
@@ -942,6 +951,63 @@ void V3Control::addInline(FileLine* fl, const string& module, const string& ftas
 
 void V3Control::addModulePragma(const string& module, VPragmaType pragma) {
     V3ControlResolver::s().modules().at(module).addModulePragma(pragma);
+}
+
+int V3Control::threadsUnitNumber(const V3Number& number) {
+    if (!number.fitsInUInt() || number.toUInt() > 0x7fffffffU
+        || (number.isSigned() && number.isNegative())) {
+        number.fileline()->v3error("threads_unit mapping requires integers in 0..2147483647.");
+        return 0;
+    }
+    return static_cast<int>(number.toUInt());
+}
+
+void V3Control::addThreadsUnitWorkers(FileLine* flp, const string& module, int instances,
+                                      int threads, const std::vector<int>& workers) {
+    if (instances <= 0 || threads <= 0) {
+        flp->v3error("threads_unit mapping requires positive instance and worker counts.");
+        return;
+    }
+    if (workers.size() != static_cast<size_t>(instances)) {
+        flp->v3error("threads_unit mapping declares " << instances << " instances but contains "
+                                                      << workers.size() << " worker indices.");
+        return;
+    }
+    for (const int worker : workers) {
+        if (worker < 0 || worker >= threads) {
+            flp->v3error("threads_unit worker index '" << worker << "' is outside 0.."
+                                                       << threads - 1 << ".");
+            return;
+        }
+    }
+    V3ControlResolver::s().modules().at(module).addThreadsUnitWorkers(
+        ThreadsUnitWorkers{flp, instances, threads, workers});
+}
+
+const V3Control::ThreadsUnitWorkers* V3Control::getThreadsUnitWorkers(const string& module,
+                                                                      size_t instances) {
+    const V3ControlModule* const modp = V3ControlResolver::s().modules().resolve(module);
+    if (!modp || modp->threadsUnitWorkers().empty()) return nullptr;
+    const ThreadsUnitWorkers* resultp = nullptr;
+    for (const ThreadsUnitWorkers& mapping : modp->threadsUnitWorkers()) {
+        if (mapping.m_threads != v3Global.opt.threads()
+            || static_cast<size_t>(mapping.m_instances) != instances)
+            continue;
+        if (resultp) {
+            mapping.m_flp->v3error("Multiple threads_unit mappings match module '"
+                                   << module << "' with " << instances << " instances and "
+                                   << mapping.m_threads << " workers.");
+            return nullptr;
+        }
+        resultp = &mapping;
+    }
+    if (!resultp) {
+        modp->threadsUnitWorkers().front().m_flp->v3error(
+            "No threads_unit mapping matches module '"
+            << module << "' with " << instances << " instances and " << v3Global.opt.threads()
+            << " workers.");
+    }
+    return resultp;
 }
 
 void V3Control::addProfileData(FileLine* fl, const string& hierDpi, uint64_t cost) {

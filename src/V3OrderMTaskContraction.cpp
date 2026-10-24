@@ -115,6 +115,7 @@ public:
     SiblingMC* toSiblingMC();  // Instead of cast<>/as<>
     EdgeMC* toEdgeMC();  // Instead of cast<>/as<>
     bool mergeWouldCreateCycle(OrderMTaskGraph& graph);
+    bool mergeWouldMixThreads();
 
     // The current score of this candidate, which changes as the graph is contracted
     inline uint64_t currentScore();
@@ -206,6 +207,14 @@ SiblingMC* MergeCandidate::toSiblingMC() {
 }
 
 EdgeMC* MergeCandidate::toEdgeMC() { return isSiblingMC() ? nullptr : static_cast<EdgeMC*>(this); }
+
+bool MergeCandidate::mergeWouldMixThreads() {
+    if (const SiblingMC* const siblingp = toSiblingMC()) {
+        return !siblingp->ap()->canMergeWith(siblingp->bp());
+    }
+    const MTaskEdge* const edgep = toEdgeMC()->edgep();
+    return !edgep->fromMTaskp()->canMergeWith(edgep->toMTaskp());
+}
 
 bool MergeCandidate::mergeWouldCreateCycle(OrderMTaskGraph& graph) {
     // Sibling merge: merging creates a cycle if either sibling is reachable from the other
@@ -596,6 +605,10 @@ class Contraction final {
             // Pick the candidate yielding the lowest local critical path.
             MergeCandidate* const mergeCanp = m_sb.best();
             if (!mergeCanp) break;  // No more candidates
+            if (mergeCanp->mergeWouldMixThreads()) {
+                m_sb.removeMC(mergeCanp);
+                continue;
+            }
 
             // If the score has changed since it was inserted into the scoreboard, rescore it and
             // pick again. (The real scores can differ from the one used to insert it into the

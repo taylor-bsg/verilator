@@ -1,0 +1,5 @@
+%Error-UNSUPPORTED: t/t_threads_unit.v:73:8: Unsupported: threads_unit worker assignment for a multi-worker hierarchical task.
+   73 | module t (
+      |        ^
+                    ... For error description see https://verilator.org/warn/UNSUPPORTED?v=latest
+%Error: Exiting due to

@@ -317,7 +317,7 @@ The grammar of control commands is as follows:
 
    Same as :option:`/*verilator&32;split_var*/` metacomment.
 
-.. option:: threads_unit -module "<modulename>"
+.. option:: threads_unit -module "<modulename>" [-workers <instances>-><workers>: { <worker indices> }]...
 
    With :vlopt:`--threads` above 1, partition each instance of the module
    as a unit, keeping its logic in a few mtasks instead of spreading it
@@ -329,6 +329,37 @@ The grammar of control commands is as follows:
    module is not inlined. Ignored for the top module.
 
    Same as :option:`/*verilator&32;threads_unit*/` metacomment.
+
+   The optional ``-workers`` list assigns instances to logical workers. In
+   ``16->8:``, 16 is the number of retained instances of this module type
+   after elaboration, and 8 is the :vlopt:`--threads` value. The list must
+   contain exactly 16 worker indices, each from 0 through 7. Whitespace,
+   newlines, and comments may separate entries inside the braces.
+
+   Lists may be repeated on one directive or on separate directives. For
+   each module type, exactly one list must match both its instance count
+   and the worker count. A missing or ambiguous match is an error. Module
+   types without lists use automatic placement. With ``--threads 1``, unit
+   grouping and worker assignment are ignored.
+
+   .. include:: ../gen/ex_threads_unit_workers.rst
+
+   Instance indices start at zero for each original module type, combining
+   all parameter specializations. Instances are sorted by hierarchical
+   name, with decimal runs compared numerically, so ``g[2]`` precedes
+   ``g[10]``. Numbering is shared by all execution regions, including units
+   with no work in a particular region. Use :vlopt:`--threads-unit-list`
+   with a plain ``threads_unit`` directive to discover the index-to-instance
+   map before writing the lists, or with lists to inspect the assignments.
+
+   Worker indices identify the static scheduler's workers, not operating
+   system CPU numbers. With ``--threads N``, worker ``N-1`` executes on the
+   thread calling ``eval()``, and workers 0 through ``N-2`` execute on the
+   worker pool. CPU affinity must be configured separately. Only work in
+   parallel execution regions is assigned; serial initialization and other
+   serial regions still execute on the calling thread. Nested units use
+   their own placement. Assigning a hierarchical task that itself uses
+   multiple workers is currently unsupported.
 
 .. option:: timing_off [-file "<filename>" [-lines <line> [ - <line>]]]
 

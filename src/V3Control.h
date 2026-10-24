@@ -29,6 +29,13 @@
 
 class V3Control final {
 public:
+    struct ThreadsUnitWorkers final {
+        FileLine* m_flp;  // Location of the mapping directive
+        int m_instances;  // Instance count selecting this mapping
+        int m_threads;  // Worker count selecting this mapping
+        std::vector<int> m_workers;  // Worker for each instance index
+    };
+
     struct FsmRegisterWrapper final {
         string moduleName;
         string d;
@@ -61,6 +68,8 @@ public:
     static void addProfileData(FileLine* fl, const string& model, const string& key,
                                uint64_t cost);
     static void addScopeTraceOn(bool on, const string& scope, int levels);
+    static void addThreadsUnitWorkers(FileLine* flp, const string& module, int instances,
+                                      int threads, const std::vector<int>& workers);
     static void addVarAttr(FileLine* fl, const string& module, const string& ftask,
                            VarSpecKind kind, const string& pattern, VAttrType type,
                            AstSenTree* nodep);
@@ -81,6 +90,8 @@ public:
     static uint64_t getProfileData(const string& model, const string& key);
     static FileLine* getProfileDataFileLine();
     static bool getScopeTraceOn(const string& scope);
+    static const ThreadsUnitWorkers* getThreadsUnitWorkers(const string& module, size_t instances);
+    static int threadsUnitNumber(const V3Number& number);
 
     static void contentsPushText(const string& text);
 

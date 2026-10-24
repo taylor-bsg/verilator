@@ -197,6 +197,8 @@ void OrderMTaskGraph::addEdge(LogicMTask* fromp, LogicMTask* top) {
 }
 
 void OrderMTaskGraph::mergeMTasks(LogicMTask* recipientp, LogicMTask* donorp) {
+    UASSERT_OBJ(recipientp->canMergeWith(donorp), recipientp, "Conflicting explicit owners");
+    if (recipientp->m_fixedThread < 0) recipientp->m_fixedThread = donorp->m_fixedThread;
     UASSERT_OBJ(recipientp != donorp, recipientp, "Should not merge an MTask with itself");
 
     // Note we redirect the edges before updating the cost and critical paths of the recipient,

@@ -25,6 +25,7 @@
 #include <vector>
 
 class AstCFunc;
+class AstNetlist;
 class AstVarScope;
 
 namespace V3Sched {
@@ -36,6 +37,9 @@ class TriggerKit;
 //============================================================================
 
 namespace V3Order {
+
+// Resolve instance indices and worker assignments once for all execution regions.
+void assignThreadsUnits(AstNetlist* netlistp);
 
 // Callable to add the indices of extra external triggers of a variable to the given set
 using ExternalTriggersProvider = std::function<void(const AstVarScope*, std::set<uint32_t>&)>;

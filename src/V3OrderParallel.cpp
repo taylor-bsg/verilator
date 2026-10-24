@@ -25,12 +25,14 @@
 #include "V3Control.h"
 #include "V3Error.h"
 #include "V3ExecGraph.h"
+#include "V3File.h"
 #include "V3Graph.h"
 #include "V3GraphStream.h"
 #include "V3OrderCFuncEmitter.h"
 #include "V3OrderInternal.h"
 #include "V3OrderMTaskGraph.h"
 
+#include <iomanip>
 #include <map>
 #include <memory>
 #include <unordered_map>
@@ -114,6 +116,113 @@ static void checkDataHazards(OrderMTaskGraph& mTaskGraph) {
 //######################################################################
 // Partitioner implementation
 
+// Compare decimal runs numerically, so generate indices 2 and 10 stay in topology order.
+static bool threadsUnitNameLess(const string& lhs, const string& rhs) {
+    size_t lpos = 0;
+    size_t rpos = 0;
+    while (lpos < lhs.size() && rpos < rhs.size()) {
+        if (std::isdigit(static_cast<unsigned char>(lhs[lpos]))
+            && std::isdigit(static_cast<unsigned char>(rhs[rpos]))) {
+            size_t lend = lpos;
+            size_t rend = rpos;
+            while (lend < lhs.size() && std::isdigit(static_cast<unsigned char>(lhs[lend])))
+                ++lend;
+            while (rend < rhs.size() && std::isdigit(static_cast<unsigned char>(rhs[rend])))
+                ++rend;
+            size_t lsignificant = lpos;
+            size_t rsignificant = rpos;
+            while (lsignificant < lend && lhs[lsignificant] == '0') ++lsignificant;
+            while (rsignificant < rend && rhs[rsignificant] == '0') ++rsignificant;
+            const bool negative = lpos && rpos && lhs[lpos - 1] == '-' && rhs[rpos - 1] == '-';
+            if (lend - lsignificant != rend - rsignificant) {
+                return negative ? lend - lsignificant > rend - rsignificant
+                                : lend - lsignificant < rend - rsignificant;
+            }
+            const int cmp = lhs.compare(lsignificant, lend - lsignificant, rhs, rsignificant,
+                                        rend - rsignificant);
+            if (cmp) return negative ? cmp > 0 : cmp < 0;
+            if (lend - lpos != rend - rpos) return lend - lpos < rend - rpos;
+            lpos = lend;
+            rpos = rend;
+        } else {
+            if (lhs[lpos] != rhs[rpos]) return lhs[lpos] < rhs[rpos];
+            ++lpos;
+            ++rpos;
+        }
+    }
+    return lhs.size() < rhs.size();
+}
+
+void V3Order::assignThreadsUnits(AstNetlist* netlistp) {
+    if (v3Global.opt.threads() <= 1) return;
+    // Number instances across parameter specializations and execution regions. Rebuilding the
+    // inventory separately for each graph would renumber units absent from that region.
+    using Instance = std::pair<string, AstScope*>;
+    std::map<string, std::vector<Instance>> modules;
+    for (AstNodeModule* modp = netlistp->modulesp(); modp;
+         modp = VN_AS(modp->nextp(), NodeModule)) {
+        if (!modp->threadsUnit()) continue;
+        for (AstNode* nodep = modp->stmtsp(); nodep; nodep = nodep->nextp()) {
+            if (AstScope* const scopep = VN_CAST(nodep, Scope)) {
+                if (!scopep->isTop()) {
+                    modules[modp->prettyDehashOrigOrName()].emplace_back(scopep->prettyName(),
+                                                                         scopep);
+                }
+            }
+        }
+    }
+    std::unique_ptr<std::ofstream> listingp;
+    if (v3Global.opt.threadsUnitList()) {
+        const string filename
+            = v3Global.opt.makeDir() + '/' + v3Global.opt.prefix() + "__threads_units.txt";
+        listingp.reset(V3File::new_ofstream(filename));
+        if (!*listingp) v3fatal("Cannot write threads_unit listing '" << filename << "'.");
+        *listingp << "# module\tinstance_index\tworker_index\tinstance\n";
+    }
+    size_t placed = 0;
+    for (auto& module : modules) {
+        std::vector<Instance>& instances = module.second;
+        std::sort(instances.begin(), instances.end(),
+                  [](const Instance& lhs, const Instance& rhs) {
+                      return threadsUnitNameLess(lhs.first, rhs.first);
+                  });
+        const V3Control::ThreadsUnitWorkers* const mappingp
+            = V3Control::getThreadsUnitWorkers(module.first, instances.size());
+        for (size_t index = 0; index < instances.size(); ++index) {
+            AstScope* const scopep = instances[index].second;
+            if (mappingp) {
+                scopep->threadsUnitWorker(mappingp->m_workers[index]);
+                ++placed;
+            }
+            if (listingp) {
+                *listingp << std::quoted(VIdProtect::protectIf(module.first)) << '\t' << index
+                          << '\t' << (mappingp ? cvtToStr(scopep->threadsUnitWorker()) : "auto")
+                          << '\t' << std::quoted(AstNode::prettyName(scopep->nameProtect()))
+                          << '\n';
+            }
+        }
+    }
+    V3Stats::addStatSum("MTask graph, explicitly placed units", placed);
+    V3Error::abortIfErrors();
+}
+
+static void assignThreadsUnitOwners(OrderMTaskGraph& graph) {
+    for (V3GraphVertex& vertex : graph.vertices()) {
+        LogicMTask& task = static_cast<LogicMTask&>(vertex);
+        for (const OrderMoveVertex& move : task.vertexList()) {
+            const OrderLogicVertex* const logicp = move.logicp();
+            if (!logicp) continue;
+            const AstScope* scopep = logicp->scopep();
+            while (scopep && !scopep->modp()->threadsUnit()) scopep = scopep->aboveScopep();
+            if (!scopep || scopep->threadsUnitWorker() < 0) continue;
+            UASSERT_OBJ(task.fixedThread() < 0
+                            || task.fixedThread() == scopep->threadsUnitWorker(),
+                        &task, "Grouping mixed threads_unit worker assignments");
+            task.fixedThread(scopep->threadsUnitWorker());
+        }
+    }
+}
+
 // Partitioner takes the fine-grained OrderMoveGraph from V3Order and collapses
 // it into a coarse-grained graph of LogicMTask's, each of which contains of set
 // of the logic nodes from the fine-grained graph.
@@ -128,6 +237,8 @@ static std::unique_ptr<OrderMTaskGraph> partition(OrderMoveGraph& moveGraph) {
     // Add edges to eliminate data hazards
     OrderMTaskGraph::fixDataHazards(*mTaskGraphp);
     mTaskGraphp->hashGraphDebug("MTask graph after fixDataHazards()");
+
+    assignThreadsUnitOwners(*mTaskGraphp);
 
     // Merge MTask nodes together, repeatedly, until the critical path budget is reached. Coarsens
     // the graph, usually by several orders of magnitude. Some tests disable this for stability,
@@ -292,8 +403,15 @@ AstNodeStmt* V3Order::createParallel(OrderMoveGraph& moveGraph, const std::strin
 
         // Create the ExecMTask
         ExecMTask* const execMTaskp = new ExecMTask{execGraphp, scopep, emitter.getStmts()};
+        execMTaskp->fixedThread(mTaskp->fixedThread());
         if (!v3Global.opt.hierBlocks().empty()) {
             execMTaskp->threads(DpiThreadsVisitor::apply(execMTaskp));
+            if (execMTaskp->threads() > 1 && execMTaskp->fixedThread() >= 0) {
+                scopep->v3warn(E_UNSUPPORTED,
+                               "Unsupported: threads_unit worker assignment for a multi-worker "
+                               "hierarchical task.");
+                V3Error::abortIfErrors();
+            }
         }
         const bool newEntry = logicMTaskToExecMTask.emplace(mTaskp, execMTaskp).second;
         UASSERT_OBJ(newEntry, mTaskp, "LogicMTasks should be processed in dependencyorder");

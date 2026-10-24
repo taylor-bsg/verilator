@@ -3653,8 +3653,12 @@ void AstScope::dump(std::ostream& str) const {
     str << " [abovep=" << nodeAddr(aboveScopep()) << "]";
     str << " [cellp=" << nodeAddr(aboveCellp()) << "]";
     str << " [modp=" << nodeAddr(modp()) << "]";
+    if (threadsUnitWorker() >= 0) str << " [threadsUnitWorker=" << threadsUnitWorker() << "]";
 }
-void AstScope::dumpJson(std::ostream& str) const { dumpJsonGen(str); }
+void AstScope::dumpJson(std::ostream& str) const {
+    dumpJsonGen(str);
+    dumpJsonNumFunc(str, threadsUnitWorker);
+}
 string AstScope::nameDotless() const {
     string result = shortName();
     string::size_type pos;
@@ -3671,7 +3675,7 @@ string AstScope::prettyNameMsg() const {
 }
 bool AstScope::sameNode(const AstNode* samep) const {
     const AstScope* const asamep = VN_DBG_AS(samep, Scope);
-    return name() == asamep->name()
+    return name() == asamep->name() && threadsUnitWorker() == asamep->threadsUnitWorker()
            && ((!aboveScopep() && !asamep->aboveScopep())
                || (aboveScopep() && asamep->aboveScopep()
                    && aboveScopep()->name() == asamep->aboveScopep()->name()));

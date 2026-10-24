@@ -338,6 +338,7 @@ private:
     bool m_threadsCoarsen = true;   // main switch: --threads-coarsen
     bool m_threadsDpiPure = true;   // main switch: --threads-dpi all/pure
     bool m_threadsDpiUnpure = false;  // main switch: --threads-dpi all
+    bool m_threadsUnitList = false;  // main switch: --threads-unit-list
     VOptionBool m_timing;           // main switch: --timing
     bool m_trace = false;           // main switch: --trace
     bool m_traceCoverage = false;   // main switch: --trace-coverage
@@ -620,6 +621,7 @@ public:
     bool threadsDpiPure() const { return m_threadsDpiPure; }
     bool threadsDpiUnpure() const { return m_threadsDpiUnpure; }
     bool threadsCoarsen() const { return m_threadsCoarsen; }
+    bool threadsUnitList() const { return m_threadsUnitList; }
     VOptionBool timing() const { return m_timing; }
     bool trace() const { return m_trace; }
     bool traceCoverage() const { return m_traceCoverage; }

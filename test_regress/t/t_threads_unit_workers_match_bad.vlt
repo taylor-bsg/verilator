@@ -1,0 +1,10 @@
+// DESCRIPTION: Verilator: Verilog Test configuration
+//
+// This file ONLY is placed under the Creative Commons Public Domain.
+// SPDX-FileCopyrightText: 2026 Wilson Snyder
+// SPDX-License-Identifier: CC0-1.0
+`verilator_config
+threads_unit -module "tile" -workers 4->2: { 0 0 1 1 }
+threads_unit -module "til*" -workers 4->2: { 1 1 0 0 }
+threads_unit -module "acc" -workers 4->4: { 0 1 2 3 }
+threads_unit -module "chk" -workers 2->2: { 0 1 }

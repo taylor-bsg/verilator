@@ -1,0 +1,11 @@
+%Error: t/t_threads_unit_workers_match_bad.vlt:9:28: No threads_unit mapping matches module 'acc' with 4 instances and 2 workers.
+    9 | threads_unit -module "acc" -workers 4->4: { 0 1 2 3 }
+      |                            ^~~~~~~~
+        ... See the manual at https://verilator.org/verilator_doc.html?v=latest for more assistance.
+%Error: t/t_threads_unit_workers_match_bad.vlt:10:28: No threads_unit mapping matches module 'chk' with 1 instances and 2 workers.
+   10 | threads_unit -module "chk" -workers 2->2: { 0 1 }
+      |                            ^~~~~~~~
+%Error: t/t_threads_unit_workers_match_bad.vlt:7:29: Multiple threads_unit mappings match module 'tile' with 4 instances and 2 workers.
+    7 | threads_unit -module "tile" -workers 4->2: { 0 0 1 1 }
+      |                             ^~~~~~~~
+%Error: Exiting due to

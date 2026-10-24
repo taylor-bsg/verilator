@@ -1863,6 +1863,7 @@ void V3Options::parseOptsList(FileLine* fl, const string& optdir, int argc,
         m_threadsMaxMTasks = std::atoi(valp);
         if (m_threadsMaxMTasks < 1) fl->v3fatal("--threads-max-mtasks must be >= 1: " << valp);
     });
+    DECL_OPTION("-threads-unit-list", OnOff, &m_threadsUnitList).notForRerun();
     DECL_OPTION("-timescale", CbVal, [this, fl](const char* valp) {
         VTimescale unit;
         VTimescale prec;

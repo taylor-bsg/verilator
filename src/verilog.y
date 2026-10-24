@@ -8512,11 +8512,30 @@ vltItem:
         |       yVLT_PROFILE_DATA vltDModel vltDMtask vltDCost
                         { V3Control::addProfileData($<fl>1, *$2, *$3, $4->toUQuad()); }
         |       yVLT_THREADS_UNIT vltDModule
-                        { V3Control::addModulePragma(*$2, VPragmaType::THREADS_UNIT); }
+                        { V3Control::addModulePragma(*$2, VPragmaType::THREADS_UNIT);
+                          GRAMMARP->m_vltThreadsUnitModule = *$2; }
+                vltThreadsUnitWorkersE
         |       yVLT_FSM_REGISTER_WRAPPER vltDModule vltDFsmD vltDFsmQ vltDFsmClock vltDFsmResetE vltDFsmResetValueE
                         { V3Control::addFsmRegisterWrapper($<fl>1, *$2, *$3, *$4, *$5, *$6, *$7); }
         |       yVLT_VERILATOR_LIB vltDModule
                         { V3Control::addModulePragma(*$2, VPragmaType::VERILATOR_LIB); }
+        ;
+
+// Verilator extension: select a mapping by instance count and --threads.
+vltThreadsUnitWorkersE:
+                /* empty */
+        |       vltThreadsUnitWorkersE yVLT_D_WORKERS yaINTNUM yP_MINUSGT yaINTNUM ':' '{'
+                        { GRAMMARP->m_vltThreadsUnitWorkers.clear(); }
+                vltThreadsUnitWorkerList '}'
+                        { V3Control::addThreadsUnitWorkers($2, GRAMMARP->m_vltThreadsUnitModule,
+                              V3Control::threadsUnitNumber(*$3), V3Control::threadsUnitNumber(*$5),
+                              GRAMMARP->m_vltThreadsUnitWorkers); }
+        ;
+
+vltThreadsUnitWorkerList:
+                /* empty */
+        |       vltThreadsUnitWorkerList yaINTNUM
+                        { GRAMMARP->m_vltThreadsUnitWorkers.push_back(V3Control::threadsUnitNumber(*$2)); }
         ;
 
 vltOffFront<errcodeen>:
