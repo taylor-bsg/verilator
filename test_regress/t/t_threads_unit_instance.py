@@ -61,6 +61,8 @@ for count, mode in [(12, ''), (4, '--flatten'), (4, '-fno-inline')]:
                           re.M | re.S)
     seen = set()
     for worker, body in dispatch:
+        # The scheduler numbers the caller last; the configuration numbers it zero.
+        worker = (int(worker) + 1) % 2
         for task in re.findall(r'\b(\w+__nba_mtask\d+)\(', body):
             for scope in re.findall(r'\(\(&vlSymsp->vlInst.TOP__(t__[A-Za-z_0-9]+)\)\)',
                                     task_bodies[task]):
@@ -68,7 +70,7 @@ for count, mode in [(12, ''), (4, '--flatten'), (4, '-fno-inline')]:
                 units = [unit for unit in expected if name == unit or name.startswith(unit + '.')]
                 if units:
                     unit = max(units, key=len)
-                    assert int(worker) == expected[unit][2], (name, worker, expected[unit])
+                    assert worker == expected[unit][2], (name, worker, expected[unit])
                     seen.add(unit)
     assert seen == set(expected), (seen, expected)
     symbols = test.file_contents(test.glob_one(test.obj_dir + '/*__Syms.h'))

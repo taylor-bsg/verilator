@@ -40,12 +40,14 @@ for count, expected in [(16, [1] * 8 + [0] * 8), (4, [1, 0, 1, 0])]:
                           re.M | re.S)
     seen = set()
     for worker, body in dispatch:
+        # The scheduler numbers the caller last; the configuration numbers it zero.
+        worker = (int(worker) + 1) % 2
         for task in re.findall(r'\b(\w+__nba_mtask\d+)\(', body):
             for index in re.findall(
                     r'\(\(&vlSymsp->vlInst.TOP__t__DOT__g__BRA__(\d+)__KET____DOT__u\)\)',
                     task_bodies[task]):
                 index = int(index)
-                assert int(worker) == expected[index], (index, worker, expected[index])
+                assert worker == expected[index], (index, worker, expected[index])
                 seen.add(index)
     assert seen >= set(range(1, count)), seen
 

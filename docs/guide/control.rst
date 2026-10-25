@@ -373,10 +373,10 @@ The grammar of control commands is as follows:
 
    .. include:: ../gen/ex_threads_unit_instance.rst
 
-   Worker indices identify the static scheduler's workers, not operating
-   system CPU numbers. With ``--threads N``, worker ``N-1`` executes on the
-   thread calling ``eval()``, and workers 0 through ``N-2`` execute on the
-   worker pool. CPU affinity must be configured separately. Only work in
+   Worker indices identify simulator threads, not operating system CPU
+   numbers. With ``--threads N``, worker 0 executes on the thread calling
+   ``eval()``, and workers 1 through ``N-1`` execute on the worker pool.
+   CPU affinity must be configured separately. Only work in
    parallel execution regions is assigned; serial initialization and other
    serial regions still execute on the calling thread. Nested units use
    their own placement. Assigning a hierarchical task that itself uses

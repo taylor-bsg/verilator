@@ -270,10 +270,12 @@ static void assignThreadsUnitOwners(OrderMTaskGraph& graph) {
             const AstScope* scopep = logicp->scopep();
             while (scopep && !V3Control::isThreadsUnit(scopep)) { scopep = scopep->aboveScopep(); }
             if (!scopep || scopep->threadsUnitWorker() < 0) continue;
-            UASSERT_OBJ(task.fixedThread() < 0
-                            || task.fixedThread() == scopep->threadsUnitWorker(),
-                        &task, "Grouping mixed threads_unit worker assignments");
-            task.fixedThread(scopep->threadsUnitWorker());
+            // Worker zero is the caller, which the scheduler places after its pool threads.
+            const int worker = scopep->threadsUnitWorker();
+            const int thread = worker ? worker - 1 : v3Global.opt.threads() - 1;
+            UASSERT_OBJ(task.fixedThread() < 0 || task.fixedThread() == thread, &task,
+                        "Grouping mixed threads_unit worker assignments");
+            task.fixedThread(thread);
         }
     }
 }

@@ -2078,9 +2078,11 @@ Summary:
    names for each selection. Names and patterns are quoted, and honor
    :vlopt:`--protect-ids`.
 
-   The worker column reports the explicit assignment, not the automatic
-   scheduler's choices. An automatically placed unit may have tasks on
-   several workers. This option does not change scheduling.
+   The worker column uses the same numbering as :option:`threads_unit`:
+   worker 0 is the thread calling ``eval()``, and workers 1 through ``N-1``
+   are the worker pool. It reports the explicit assignment, not the
+   automatic scheduler's choices. An automatically placed unit may have
+   tasks on several workers. This option does not change scheduling.
 
 .. option:: --timescale <timeunit>/<timeprecision>
 
