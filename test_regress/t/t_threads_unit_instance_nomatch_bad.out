@@ -1,0 +1,5 @@
+%Error: obj_vltmt/t_threads_unit_instance_bad/units.vlt:2:1: No threads_unit instances match pattern 'missing*' for module 'instance_router'.
+    2 | threads_unit -module "instance_router" -instance "missing*"
+      | ^~~~~~~~~~~~
+        ... See the manual at https://verilator.org/verilator_doc.html?v=latest for more assistance.
+%Error: Exiting due to

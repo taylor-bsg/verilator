@@ -30,6 +30,7 @@
 #include "V3Inline.h"
 
 #include "V3AstUserAllocator.h"
+#include "V3Control.h"
 #include "V3Graph.h"
 #include "V3Stats.h"
 
@@ -176,18 +177,20 @@ class InlineModCellVertex final : public InlineModEitherVertex {
     AstCell* const m_cellp;  // The cell (instance)
     const char* m_doInlineWyp = nullptr;  // First reason this instance should be inlined
     bool m_flatten = false;  // Whether this cell and below already flattened (avoid O(n^2))
+    const bool m_threadsUnit;  // This instance must retain its scheduling boundary
 
 public:
     InlineModCellVertex(InlineModGraph& graph, AstCell* cellp)
         : InlineModEitherVertex{graph}
-        , m_cellp{cellp} {}
+        , m_cellp{cellp}
+        , m_threadsUnit{v3Global.opt.threads() > 1 && V3Control::isThreadsUnit(cellp)} {}
     ~InlineModCellVertex() override = default;
 
     // ACCESSORS
     AstCell* cellp() const { return m_cellp; }
     bool doInline() const { return m_doInlineWyp; }
     void setDoInline(const char* whyp) {
-        if (!m_doInlineWyp) m_doInlineWyp = whyp;
+        if (!m_threadsUnit && !m_doInlineWyp) m_doInlineWyp = whyp;
     }
     bool flatten() const { return m_flatten; }
     void setFlatten() { m_flatten = true; }
@@ -205,12 +208,15 @@ public:
 
     // debug
     FileLine* fileline() const override { return m_cellp->fileline(); }
-    std::string dotColor() const override { return m_doInlineWyp ? "green" : "black"; }
+    std::string dotColor() const override {
+        return m_threadsUnit ? "red" : m_doInlineWyp ? "green" : "black";
+    }
     std::string dotShape() const override { return "ellipse"; }
     std::string name() const override VL_MT_STABLE {
         std::string str = m_cellp->typeName() + " "s + cvtToHex(m_cellp);
         str += "\n" + m_cellp->name() + " @ " + fileline()->ascii();
         if (m_doInlineWyp) str += "\nDoInline: "s + m_doInlineWyp;
+        if (m_threadsUnit) str += "\nNoInline: threads_unit";
         str += "\n";
         return str;
     }
@@ -278,10 +284,6 @@ class InlineModGraphBuilder final : public VNVisitor {
 
         // Don't inline public modules by default
         if (nodep->modPublic()) vtxp->setNoInlineSoft("Public module");
-        // Keep the instances V3OrderParallel schedules as units
-        if (v3Global.opt.threads() > 1 && nodep->threadsUnit()) {
-            vtxp->setNoInlineHard("threads_unit");
-        }
 
         // Iterate children
         VL_RESTORER(m_modVtxp);

@@ -1,0 +1,14 @@
+%Error: obj_vltmt/t_threads_unit_instance_bad/units.vlt:3:1: Instance 't.g[0].island.io_rtr' matches multiple threads_unit instance patterns for module 'instance_router'.
+    3 | threads_unit -module "instance_router" -instance "io_rtr"
+      | ^~~~~~~~~~~~
+        ... See the manual at https://verilator.org/verilator_doc.html?v=latest for more assistance.
+%Error: obj_vltmt/t_threads_unit_instance_bad/units.vlt:3:1: Instance 't.g[1].island.io_rtr' matches multiple threads_unit instance patterns for module 'instance_router'.
+    3 | threads_unit -module "instance_router" -instance "io_rtr"
+      | ^~~~~~~~~~~~
+%Error: obj_vltmt/t_threads_unit_instance_bad/units.vlt:3:1: Instance 't.g[2].island.io_rtr' matches multiple threads_unit instance patterns for module 'instance_router'.
+    3 | threads_unit -module "instance_router" -instance "io_rtr"
+      | ^~~~~~~~~~~~
+%Error: obj_vltmt/t_threads_unit_instance_bad/units.vlt:3:1: Instance 't.g[3].island.io_rtr' matches multiple threads_unit instance patterns for module 'instance_router'.
+    3 | threads_unit -module "instance_router" -instance "io_rtr"
+      | ^~~~~~~~~~~~
+%Error: Exiting due to

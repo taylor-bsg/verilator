@@ -2072,8 +2072,11 @@ Summary:
    :file:`<prefix>__threads_units.txt` in :vlopt:`--Mdir`, listing the
    retained instances marked by :option:`threads_unit`. The tab-separated
    columns are original module type, zero-based instance index, assigned
-   worker index (or ``auto``), and hierarchical instance name. Module and
-   instance names are quoted, and honor :vlopt:`--protect-ids`.
+   worker index (or ``auto``), hierarchical instance name, and instance
+   pattern. Indices start at zero within each module type and pattern.
+   Comment lines summarize the matching instance count and local instance
+   names for each selection. Names and patterns are quoted, and honor
+   :vlopt:`--protect-ids`.
 
    The worker column reports the explicit assignment, not the automatic
    scheduler's choices. An automatically placed unit may have tasks on

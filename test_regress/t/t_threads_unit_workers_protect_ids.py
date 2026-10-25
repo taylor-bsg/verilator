@@ -20,5 +20,5 @@ test.compile(verilator_flags2=[
 test.execute()
 listing = test.obj_dir + "/" + test.vm_prefix + "__threads_units.txt"
 test.file_grep_not(listing, r'worker_tile|t\.g\[')
-test.file_grep_count(listing, r'^"\S+"\t\d+\t[01]\t"\S+"$', 16)
+test.file_grep_count(listing, r'^"\S+"\t\d+\t[01]\t"\S+"\t"\S+"$', 16)
 test.passes()

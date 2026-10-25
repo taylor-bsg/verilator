@@ -42,6 +42,7 @@ public:
     VLifetime m_varLifetime;  // Static/Automatic for next signal
     V3Control::VarSpecKind m_vltVarSpecKind = V3Control::VarSpecKind::VAR;
     string m_vltThreadsUnitModule;  // Module selected by the current threads_unit directive
+    string m_vltThreadsUnitInstance;  // Local instance pattern selected by the directive
     std::vector<int> m_vltThreadsUnitWorkers;  // Worker list currently being parsed
     bool m_impliedDecl = false;  // Allow implied wire declarations
     bool m_varDeclTyped = false;  // Var got reg/wire for dedup check

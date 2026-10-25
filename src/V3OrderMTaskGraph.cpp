@@ -18,6 +18,7 @@
 
 #include "V3OrderMTaskGraph.h"
 
+#include "V3Control.h"
 #include "V3Global.h"
 #include "V3GraphStream.h"
 #include "V3InstrCount.h"
@@ -430,7 +431,10 @@ class OrderMTaskGraphBuilder final {
         std::unordered_map<const V3GraphVertex*, Place> placeOf;
         // Nothing to do unless some module is marked
         AstNodeModule* modp = v3Global.rootp()->modulesp();
-        while (modp && !modp->threadsUnit()) modp = VN_AS(modp->nextp(), NodeModule);
+        while (modp && !modp->threadsUnit()
+               && !V3Control::getThreadsUnits(modp->prettyDehashOrigOrName())) {
+            modp = VN_AS(modp->nextp(), NodeModule);
+        }
         if (!modp) return placeOf;
         // Set the unit of each scope. Scopes are statements of their modules.
         for (modp = v3Global.rootp()->modulesp(); modp; modp = VN_AS(modp->nextp(), NodeModule)) {
@@ -438,7 +442,7 @@ class OrderMTaskGraphBuilder final {
                 AstScope* const scopep = VN_CAST(nodep, Scope);
                 if (!scopep) continue;
                 for (AstScope* sp = scopep; sp; sp = sp->aboveScopep()) {
-                    if (sp->modp()->threadsUnit()) {
+                    if (V3Control::isThreadsUnit(sp)) {
                         scopep->user3p(sp);
                         break;
                     }

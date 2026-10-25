@@ -27,6 +27,9 @@
 
 VL_DEFINE_DEBUG_FUNCTIONS;
 
+// Instance selection runs after wrapTop adds a synthetic root above the original top modules.
+static constexpr int THREADS_UNIT_TOP_LEVEL = 2;
+
 //######################################################################
 // Resolve wildcards in files, modules, ftasks or variables
 
@@ -225,7 +228,7 @@ class V3ControlModule final {
     V3Control::FsmRegisterWrapper m_fsmRegisterWrapper;  // FSM wrapper descriptor
     std::unordered_set<std::string> m_coverageOffBlocks;  // List of block names for coverage_off
     std::set<VPragmaType> m_modPragmas;  // List of Pragmas for modules
-    std::vector<V3Control::ThreadsUnitWorkers> m_threadsUnitWorkers;  // Instance/worker mappings
+    V3Control::ThreadsUnits m_threadsUnits;  // Instance selectors and their worker mappings
     bool m_hasFsmRegisterWrapper = false;  // Whether descriptor has been set
     bool m_inline = false;  // Whether to force the inline
     bool m_inlineValue = false;  // The inline value (on/off)
@@ -238,8 +241,15 @@ public:
         m_params.update(m.m_params);
         m_ports.update(m.m_ports);
         m_vars.update(m.m_vars);
-        m_threadsUnitWorkers.insert(m_threadsUnitWorkers.end(), m.m_threadsUnitWorkers.begin(),
-                                    m.m_threadsUnitWorkers.end());
+        for (const auto& entry : m.m_threadsUnits) {
+            const auto inserted = m_threadsUnits.emplace(entry.first, entry.second);
+            if (!inserted.second) {
+                std::vector<V3Control::ThreadsUnitWorkers>& mappings
+                    = inserted.first->second.m_mappings;
+                mappings.insert(mappings.end(), entry.second.m_mappings.begin(),
+                                entry.second.m_mappings.end());
+            }
+        }
         if (m.m_hasFsmRegisterWrapper) {
             m_fsmRegisterWrapper = m.m_fsmRegisterWrapper;
             m_hasFsmRegisterWrapper = true;
@@ -278,12 +288,14 @@ public:
         return m_hasFsmRegisterWrapper ? &m_fsmRegisterWrapper : nullptr;
     }
     void addModulePragma(VPragmaType pragma) { m_modPragmas.insert(pragma); }
-    void addThreadsUnitWorkers(const V3Control::ThreadsUnitWorkers& mapping) {
-        m_threadsUnitWorkers.push_back(mapping);
+    void addThreadsUnit(FileLine* flp, const string& instance) {
+        m_threadsUnits.emplace(instance, V3Control::ThreadsUnit{flp, {}});
     }
-    const std::vector<V3Control::ThreadsUnitWorkers>& threadsUnitWorkers() const {
-        return m_threadsUnitWorkers;
+    void addThreadsUnitWorkers(const string& instance,
+                               const V3Control::ThreadsUnitWorkers& mapping) {
+        m_threadsUnits.at(instance).m_mappings.push_back(mapping);
     }
+    const V3Control::ThreadsUnits& threadsUnits() const { return m_threadsUnits; }
 
     void apply(AstNodeModule* modp) {
         if (m_inline) {
@@ -962,8 +974,15 @@ int V3Control::threadsUnitNumber(const V3Number& number) {
     return static_cast<int>(number.toUInt());
 }
 
-void V3Control::addThreadsUnitWorkers(FileLine* flp, const string& module, int instances,
-                                      int threads, const std::vector<int>& workers) {
+void V3Control::addThreadsUnit(FileLine* flp, const string& module, const string& instance) {
+    V3ControlModule& mod = V3ControlResolver::s().modules().at(module);
+    mod.addThreadsUnit(flp, instance);
+    if (instance == "*") mod.addModulePragma(VPragmaType::THREADS_UNIT);
+}
+
+void V3Control::addThreadsUnitWorkers(FileLine* flp, const string& module, const string& instance,
+                                      int instances, int threads,
+                                      const std::vector<int>& workers) {
     if (instances <= 0 || threads <= 0) {
         flp->v3error("threads_unit mapping requires positive instance and worker counts.");
         return;
@@ -981,31 +1000,99 @@ void V3Control::addThreadsUnitWorkers(FileLine* flp, const string& module, int i
         }
     }
     V3ControlResolver::s().modules().at(module).addThreadsUnitWorkers(
-        ThreadsUnitWorkers{flp, instances, threads, workers});
+        instance, ThreadsUnitWorkers{flp, instances, threads, workers});
+}
+
+const V3Control::ThreadsUnits* V3Control::getThreadsUnits(const string& module) {
+    const V3ControlModule* const modp = V3ControlResolver::s().modules().resolve(module);
+    return modp && !modp->threadsUnits().empty() ? &modp->threadsUnits() : nullptr;
+}
+
+string V3Control::threadsUnitInstanceName(const AstCell* cellp) {
+    return AstNode::prettyName(cellp->origName());
+}
+
+bool V3Control::isThreadsUnit(const AstCell* cellp) {
+    const AstNodeModule* const modp = cellp->modp();
+    if (modp->level() <= THREADS_UNIT_TOP_LEVEL) return false;
+    if (modp->threadsUnit()) return true;
+    if (const ThreadsUnits* const selectionsp = getThreadsUnits(modp->prettyDehashOrigOrName())) {
+        const string name = threadsUnitInstanceName(cellp);
+        for (const auto& selection : *selectionsp) {
+            if (VString::wildmatch(name, selection.first)) return true;
+        }
+    }
+    return false;
+}
+
+bool V3Control::isThreadsUnit(const AstScope* scopep) {
+    const AstCell* const cellp = scopep->aboveCellp();
+    // Class scopes inherit the enclosing module's cell but are not separate units.
+    return cellp && cellp->modp() == scopep->modp() && isThreadsUnit(cellp);
+}
+
+void V3Control::checkThreadsUnitInstances(AstNetlist* netlistp) {
+    if (v3Global.opt.threads() <= 1) return;
+    // Check before inlining, which can remove every nonmatching instance of a module type.
+    std::map<string, std::set<string>> names;
+    for (AstNodeModule* modp = netlistp->modulesp(); modp;
+         modp = VN_AS(modp->nextp(), NodeModule)) {
+        if (modp->level() <= THREADS_UNIT_TOP_LEVEL) continue;
+        const string module = modp->prettyDehashOrigOrName();
+        if (!getThreadsUnits(module)) continue;
+        for (AstNode* nodep = modp->stmtsp(); nodep; nodep = nodep->nextp()) {
+            if (const AstScope* const scopep = VN_CAST(nodep, Scope)) {
+                const AstCell* const cellp = scopep->aboveCellp();
+                if (cellp && cellp->modp() == modp) {
+                    names[module].emplace(threadsUnitInstanceName(cellp));
+                }
+            }
+        }
+    }
+    for (const auto& module : names) {
+        for (const auto& selection : *getThreadsUnits(module.first)) {
+            bool matched = false;
+            for (const auto& name : module.second) {
+                if (VString::wildmatch(name, selection.first)) {
+                    matched = true;
+                    break;
+                }
+            }
+            if (!matched) {
+                selection.second.m_flp->v3error("No threads_unit instances match pattern '"
+                                                << selection.first << "' for module '"
+                                                << module.first << "'.");
+            }
+        }
+    }
+    V3Error::abortIfErrors();
 }
 
 const V3Control::ThreadsUnitWorkers* V3Control::getThreadsUnitWorkers(const string& module,
+                                                                      const string& instance,
+                                                                      const ThreadsUnit& selection,
                                                                       size_t instances) {
-    const V3ControlModule* const modp = V3ControlResolver::s().modules().resolve(module);
-    if (!modp || modp->threadsUnitWorkers().empty()) return nullptr;
+    if (selection.m_mappings.empty()) return nullptr;
+    const string description = "module '" + module + "'"
+                               + (instance == "*" ? "" : " instance pattern '" + instance + "'");
     const ThreadsUnitWorkers* resultp = nullptr;
-    for (const ThreadsUnitWorkers& mapping : modp->threadsUnitWorkers()) {
+    for (const ThreadsUnitWorkers& mapping : selection.m_mappings) {
         if (mapping.m_threads != v3Global.opt.threads()
             || static_cast<size_t>(mapping.m_instances) != instances)
             continue;
         if (resultp) {
-            mapping.m_flp->v3error("Multiple threads_unit mappings match module '"
-                                   << module << "' with " << instances << " instances and "
+            mapping.m_flp->v3error("Multiple threads_unit mappings match "
+                                   << description << " with " << instances << " instances and "
                                    << mapping.m_threads << " workers.");
             return nullptr;
         }
         resultp = &mapping;
     }
     if (!resultp) {
-        modp->threadsUnitWorkers().front().m_flp->v3error(
-            "No threads_unit mapping matches module '"
-            << module << "' with " << instances << " instances and " << v3Global.opt.threads()
-            << " workers.");
+        selection.m_mappings.front().m_flp->v3error("No threads_unit mapping matches "
+                                                    << description << " with " << instances
+                                                    << " instances and " << v3Global.opt.threads()
+                                                    << " workers.");
     }
     return resultp;
 }

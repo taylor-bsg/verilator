@@ -36,6 +36,7 @@
 #include <map>
 #include <memory>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 VL_DEFINE_DEBUG_FUNCTIONS;
@@ -153,18 +154,55 @@ static bool threadsUnitNameLess(const string& lhs, const string& rhs) {
     return lhs.size() < rhs.size();
 }
 
+using ThreadsUnitInstance = std::pair<string, AstScope*>;
+
+static size_t assignThreadsUnitSelection(const string& module, const string& pattern,
+                                         const std::vector<ThreadsUnitInstance>& instances,
+                                         const V3Control::ThreadsUnit* selectionp,
+                                         std::ofstream* listingp) {
+    const V3Control::ThreadsUnitWorkers* const mappingp
+        = selectionp
+              ? V3Control::getThreadsUnitWorkers(module, pattern, *selectionp, instances.size())
+              : nullptr;
+    if (listingp) {
+        *listingp << "# Selection: module " << std::quoted(VIdProtect::protectIf(module))
+                  << " instance " << std::quoted(VIdProtect::protectIf(pattern)) << " matches "
+                  << instances.size() << '\n';
+        std::map<string, size_t> names;
+        for (const ThreadsUnitInstance& instance : instances) {
+            ++names[V3Control::threadsUnitInstanceName(instance.second->aboveCellp())];
+        }
+        for (const auto& name : names) {
+            *listingp << "# Local instance " << std::quoted(VIdProtect::protectIf(name.first))
+                      << " count " << name.second << '\n';
+        }
+    }
+    for (size_t index = 0; index < instances.size(); ++index) {
+        AstScope* const scopep = instances[index].second;
+        if (mappingp) scopep->threadsUnitWorker(mappingp->m_workers[index]);
+        if (listingp) {
+            *listingp << std::quoted(VIdProtect::protectIf(module)) << '\t' << index << '\t'
+                      << (mappingp ? cvtToStr(scopep->threadsUnitWorker()) : "auto") << '\t'
+                      << std::quoted(AstNode::prettyName(scopep->nameProtect())) << '\t'
+                      << std::quoted(VIdProtect::protectIf(pattern)) << '\n';
+        }
+    }
+    return mappingp ? instances.size() : 0;
+}
+
 void V3Order::assignThreadsUnits(AstNetlist* netlistp) {
     if (v3Global.opt.threads() <= 1) return;
     // Number instances across parameter specializations and execution regions. Rebuilding the
     // inventory separately for each graph would renumber units absent from that region.
-    using Instance = std::pair<string, AstScope*>;
-    std::map<string, std::vector<Instance>> modules;
+    std::map<string, std::vector<ThreadsUnitInstance>> modules;
     for (AstNodeModule* modp = netlistp->modulesp(); modp;
          modp = VN_AS(modp->nextp(), NodeModule)) {
-        if (!modp->threadsUnit()) continue;
+        if (!modp->threadsUnit() && !V3Control::getThreadsUnits(modp->prettyDehashOrigOrName())) {
+            continue;
+        }
         for (AstNode* nodep = modp->stmtsp(); nodep; nodep = nodep->nextp()) {
             if (AstScope* const scopep = VN_CAST(nodep, Scope)) {
-                if (!scopep->isTop()) {
+                if (V3Control::isThreadsUnit(scopep)) {
                     modules[modp->prettyDehashOrigOrName()].emplace_back(scopep->prettyName(),
                                                                          scopep);
                 }
@@ -177,29 +215,46 @@ void V3Order::assignThreadsUnits(AstNetlist* netlistp) {
             = v3Global.opt.makeDir() + '/' + v3Global.opt.prefix() + "__threads_units.txt";
         listingp.reset(V3File::new_ofstream(filename));
         if (!*listingp) v3fatal("Cannot write threads_unit listing '" << filename << "'.");
-        *listingp << "# module\tinstance_index\tworker_index\tinstance\n";
+        *listingp << "# module\tinstance_index\tworker_index\tinstance\tinstance_pattern\n";
     }
     size_t placed = 0;
     for (auto& module : modules) {
-        std::vector<Instance>& instances = module.second;
+        std::vector<ThreadsUnitInstance>& instances = module.second;
         std::sort(instances.begin(), instances.end(),
-                  [](const Instance& lhs, const Instance& rhs) {
+                  [](const ThreadsUnitInstance& lhs, const ThreadsUnitInstance& rhs) {
                       return threadsUnitNameLess(lhs.first, rhs.first);
                   });
-        const V3Control::ThreadsUnitWorkers* const mappingp
-            = V3Control::getThreadsUnitWorkers(module.first, instances.size());
-        for (size_t index = 0; index < instances.size(); ++index) {
-            AstScope* const scopep = instances[index].second;
-            if (mappingp) {
-                scopep->threadsUnitWorker(mappingp->m_workers[index]);
-                ++placed;
+        std::unordered_set<const AstScope*> selected;
+        if (const V3Control::ThreadsUnits* const selectionsp
+            = V3Control::getThreadsUnits(module.first)) {
+            for (const auto& selection : *selectionsp) {
+                std::vector<ThreadsUnitInstance> matching;
+                for (const ThreadsUnitInstance& instance : instances) {
+                    if (!VString::wildmatch(
+                            V3Control::threadsUnitInstanceName(instance.second->aboveCellp()),
+                            selection.first)) {
+                        continue;
+                    }
+                    if (!selected.emplace(instance.second).second) {
+                        selection.second.m_flp->v3error(
+                            "Instance '"
+                            << instance.first
+                            << "' matches multiple threads_unit instance patterns for module '"
+                            << module.first << "'.");
+                    }
+                    matching.push_back(instance);
+                }
+                placed += assignThreadsUnitSelection(module.first, selection.first, matching,
+                                                     &selection.second, listingp.get());
             }
-            if (listingp) {
-                *listingp << std::quoted(VIdProtect::protectIf(module.first)) << '\t' << index
-                          << '\t' << (mappingp ? cvtToStr(scopep->threadsUnitWorker()) : "auto")
-                          << '\t' << std::quoted(AstNode::prettyName(scopep->nameProtect()))
-                          << '\n';
-            }
+        }
+        // A metacomment can additionally mark instances not covered by configuration selectors.
+        std::vector<ThreadsUnitInstance> remaining;
+        for (const ThreadsUnitInstance& instance : instances) {
+            if (!selected.count(instance.second)) remaining.push_back(instance);
+        }
+        if (!remaining.empty()) {
+            assignThreadsUnitSelection(module.first, "*", remaining, nullptr, listingp.get());
         }
     }
     V3Stats::addStatSum("MTask graph, explicitly placed units", placed);
@@ -213,7 +268,7 @@ static void assignThreadsUnitOwners(OrderMTaskGraph& graph) {
             const OrderLogicVertex* const logicp = move.logicp();
             if (!logicp) continue;
             const AstScope* scopep = logicp->scopep();
-            while (scopep && !scopep->modp()->threadsUnit()) scopep = scopep->aboveScopep();
+            while (scopep && !V3Control::isThreadsUnit(scopep)) { scopep = scopep->aboveScopep(); }
             if (!scopep || scopep->threadsUnitWorker() < 0) continue;
             UASSERT_OBJ(task.fixedThread() < 0
                             || task.fixedThread() == scopep->threadsUnitWorker(),

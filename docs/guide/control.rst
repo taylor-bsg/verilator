@@ -317,7 +317,7 @@ The grammar of control commands is as follows:
 
    Same as :option:`/*verilator&32;split_var*/` metacomment.
 
-.. option:: threads_unit -module "<modulename>" [-workers <instances>-><workers>: { <worker indices> }]...
+.. option:: threads_unit -module "<modulename>" [-instance "<pattern>"] [-workers <instances>-><workers>: { <worker indices> }]...
 
    With :vlopt:`--threads` above 1, partition each instance of the module
    as a unit, keeping its logic in a few mtasks instead of spreading it
@@ -326,31 +326,52 @@ The grammar of control commands is as follows:
    of the design, such as the tiles of a manycore. Marking a module that is
    a large part of the design reduces parallelism. Several modules may be
    marked, and logic belongs to the nearest marked instance above it. The
-   module is not inlined. Ignored for the top module.
+   selected instances are not inlined. Ignored for the top module.
 
-   Same as :option:`/*verilator&32;threads_unit*/` metacomment.
+   Without ``-instance``, same as the
+   :option:`/*verilator&32;threads_unit*/` metacomment.
+
+   The optional ``-instance`` selects instances by their local RTL name,
+   using ``*`` for any sequence of characters and ``?`` for one character.
+   For example, ``-instance "io_rtr*"`` selects instances named ``io_rtr``
+   or ``io_rtr_left``, regardless of their enclosing modules or generate
+   blocks. Array elements include their subscripts, such as ``rtr[2]``;
+   ``-instance "rtr*"`` selects all such elements. Omitting ``-instance``
+   selects all instances of the module type, as does ``-instance "*"``.
+
+   Nonmatching instances remain eligible for inlining, and their logic
+   belongs to the nearest enclosing selected unit, if any. A module's
+   ``threads_unit`` metacomment still marks all its instances; a filtered
+   configuration may assign workers to a subset while the remaining units
+   use automatic placement. A pattern matching no instances of an
+   instantiated module type is an error.
 
    The optional ``-workers`` list assigns instances to logical workers. In
    ``16->8:``, 16 is the number of retained instances of this module type
-   after elaboration, and 8 is the :vlopt:`--threads` value. The list must
-   contain exactly 16 worker indices, each from 0 through 7. Whitespace,
-   newlines, and comments may separate entries inside the braces.
+   after elaboration and instance filtering, and 8 is the :vlopt:`--threads`
+   value. The list must contain exactly 16 worker indices, each from 0
+   through 7. Whitespace, newlines, and comments may separate entries
+   inside the braces.
 
    Lists may be repeated on one directive or on separate directives. For
-   each module type, exactly one list must match both its instance count
-   and the worker count. A missing or ambiguous match is an error. Module
-   types without lists use automatic placement. With ``--threads 1``, unit
-   grouping and worker assignment are ignored.
+   each module type and instance pattern, exactly one list must match both
+   its instance count and the worker count. A missing or ambiguous match
+   is an error. Different patterns for a module type must not overlap.
+   Selections without lists use automatic placement. With ``--threads 1``,
+   unit grouping, instance filtering, and worker assignment are ignored.
 
    .. include:: ../gen/ex_threads_unit_workers.rst
 
-   Instance indices start at zero for each original module type, combining
-   all parameter specializations. Instances are sorted by hierarchical
-   name, with decimal runs compared numerically, so ``g[2]`` precedes
-   ``g[10]``. Numbering is shared by all execution regions, including units
-   with no work in a particular region. Use :vlopt:`--threads-unit-list`
+   Instance indices start at zero for each original module type and
+   instance pattern, combining all parameter specializations. Instances
+   are sorted by hierarchical name, with decimal runs compared numerically,
+   so ``g[2]`` precedes ``g[10]``. Numbering is shared by all execution
+   regions, including units with no work in a particular region. Use
+   :vlopt:`--threads-unit-list`
    with a plain ``threads_unit`` directive to discover the index-to-instance
    map before writing the lists, or with lists to inspect the assignments.
+
+   .. include:: ../gen/ex_threads_unit_instance.rst
 
    Worker indices identify the static scheduler's workers, not operating
    system CPU numbers. With ``--threads N``, worker ``N-1`` executes on the

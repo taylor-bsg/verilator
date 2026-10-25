@@ -27,8 +27,8 @@ for count, expected in [(16, [1] * 8 + [0] * 8), (4, [1, 0, 1, 0])]:
 
     listing = test.file_contents(f"{test.obj_dir}/{test.vm_prefix}__threads_units.txt")
     rows = [line.split('\t') for line in listing.splitlines() if not line.startswith('#')]
-    assert rows == [['"worker_tile"', str(i),
-                     str(expected[i]), f'"t.g[{i}].u"'] for i in range(count)]
+    assert rows == [['"worker_tile"',
+                     str(i), str(expected[i]), f'"t.g[{i}].u"', '"*"'] for i in range(count)]
     test.file_grep(test.stats, r'MTask graph, explicitly placed units\s+(\d+)', count)
 
     # Inspect actual generated task dispatch, independently of the listing. Parameter variants

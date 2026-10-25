@@ -20,7 +20,7 @@ threads_unit -module "worker_tile"
 test.compile(verilator_flags2=[test.obj_dir + "/units.vlt", "--threads-unit-list"], threads=2)
 test.execute()
 test.file_grep_count(test.obj_dir + "/" + test.vm_prefix + "__threads_units.txt",
-                     r'^"worker_tile"\t\d+\tauto\t"t\.g\[\d+\]\.u"$', 16)
+                     r'^"worker_tile"\t\d+\tauto\t"t\.g\[\d+\]\.u"\t"\*"$', 16)
 
 # The same mapping file can be kept for serial builds, where units are ignored.
 test.clean_objs()
