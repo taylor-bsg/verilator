@@ -251,9 +251,7 @@ module t (
     for (int k = 0; k < 8; k++) r[k+4] = v[k];
     return r;
   endfunction
-  // verilator lint_off UNOPTPUBLIC
   logic [63:0] public_dst  /* verilator public_flat_rw */;
-  // verilator lint_on UNOPTPUBLIC
   always_comb begin
     public_dst = '0;
     for (int i = 0; i < 64; i++) public_dst[i] = src64[i];
