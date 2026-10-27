@@ -643,11 +643,6 @@ IData VL_RAND_RESET_I(int obits) VL_MT_SAFE {
     return data;
 }
 
-WDataOutP VL_ZERO_RESET_W(int obits, WDataOutP outwp) VL_MT_SAFE {
-    // Not inlined to speed up compilation of slowpath code
-    return VL_ZERO_W(obits, outwp);
-}
-
 //===========================================================================
 // Debug
 

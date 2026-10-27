@@ -127,9 +127,6 @@ extern WDataOutP VL_SCOPED_RAND_RESET_ASSIGN_W(int obits, WDataOutP outwp, uint6
 /// Random reset a signal of given width (init time only)
 extern IData VL_RAND_RESET_I(int obits) VL_MT_SAFE;
 
-/// Zero reset a signal (slow - else use VL_ZERO_W)
-extern WDataOutP VL_ZERO_RESET_W(int obits, WDataOutP outwp) VL_MT_SAFE;
-
 extern void VL_PRINTTIMESCALE(const char* namep, const char* timeunitp,
                               const VerilatedContext* contextp) VL_MT_SAFE;
 
