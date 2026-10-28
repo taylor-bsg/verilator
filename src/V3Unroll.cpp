@@ -360,7 +360,9 @@ class UnrollOneVisitor final : VNVisitor {
             return;
         }
         // Otherwise just like a generic statement
-        process(nodep->lhsp());
+        if (!process(nodep->lhsp())) return;
+        // Fold the substituted index of a selected bit range
+        if (AstSel* const selp = VN_CAST(nodep->lhsp(), Sel)) V3Const::constifyEdit(selp->lsbp());
     }
     void visit(AstIf* nodep) override {
         if (!m_ok) return;
