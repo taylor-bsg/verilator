@@ -1,0 +1,5 @@
+%Error: obj_vltmt/t_threads_group_instance_bad/units.vlt:2:58: No threads_group mapping matches module 'instance_router' instance pattern 'io_*' with 4 instances and 2 workers.
+    2 | threads_group -module "instance_router" -instance "io_*" -workers 5->2: { 0 0 1 1 1 }
+      |                                                          ^~~~~~~~
+        ... See the manual at https://verilator.org/verilator_doc.html?v=latest for more assistance.
+%Error: Exiting due to

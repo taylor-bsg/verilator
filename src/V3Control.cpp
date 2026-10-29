@@ -28,6 +28,9 @@
 
 VL_DEFINE_DEBUG_FUNCTIONS;
 
+// Instance selection runs after wrapTop adds a synthetic root above the original top modules.
+static constexpr int THREADS_GROUP_TOP_LEVEL = 2;
+
 //######################################################################
 // Resolve wildcards in files, modules, ftasks or variables
 
@@ -230,6 +233,7 @@ class V3ControlModule final {
     V3Control::FsmRegisterWrapper m_fsmRegisterWrapper;  // FSM wrapper descriptor
     std::unordered_set<std::string> m_coverageOffBlocks;  // List of block names for coverage_off
     std::set<VPragmaType> m_modPragmas;  // List of Pragmas for modules
+    V3Control::ThreadsGroups m_threadsGroups;  // Instance selectors and their worker mappings
     bool m_hasFsmRegisterWrapper = false;  // Whether descriptor has been set
     bool m_inline = false;  // Whether to force the inline
     bool m_inlineValue = false;  // The inline value (on/off)
@@ -242,6 +246,15 @@ public:
         m_params.update(m.m_params);
         m_ports.update(m.m_ports);
         m_vars.update(m.m_vars);
+        for (const auto& entry : m.m_threadsGroups) {
+            const auto inserted = m_threadsGroups.emplace(entry.first, entry.second);
+            if (!inserted.second) {
+                std::vector<V3Control::ThreadsGroupWorkers>& mappings
+                    = inserted.first->second.m_mappings;
+                mappings.insert(mappings.end(), entry.second.m_mappings.begin(),
+                                entry.second.m_mappings.end());
+            }
+        }
         if (m.m_hasFsmRegisterWrapper) {
             m_fsmRegisterWrapper = m.m_fsmRegisterWrapper;
             m_hasFsmRegisterWrapper = true;
@@ -280,6 +293,14 @@ public:
         return m_hasFsmRegisterWrapper ? &m_fsmRegisterWrapper : nullptr;
     }
     void addModulePragma(VPragmaType pragma) { m_modPragmas.insert(pragma); }
+    void addThreadsGroup(FileLine* flp, const string& instance) {
+        m_threadsGroups.emplace(instance, V3Control::ThreadsGroup{flp, {}});
+    }
+    void addThreadsGroupWorkers(const string& instance,
+                               const V3Control::ThreadsGroupWorkers& mapping) {
+        m_threadsGroups.at(instance).m_mappings.push_back(mapping);
+    }
+    const V3Control::ThreadsGroups& threadsGroups() const { return m_threadsGroups; }
 
     void apply(AstNodeModule* modp) {
         if (m_inline) {
@@ -950,6 +971,147 @@ void V3Control::addInline(FileLine* fl, const string& module, const string& ftas
 
 void V3Control::addModulePragma(const string& module, VPragmaType pragma) {
     V3ControlResolver::s().modules().at(module).addModulePragma(pragma);
+}
+
+int V3Control::threadsGroupNumber(const V3Number& number) {
+    if (!number.fitsInUInt() || number.toUInt() > 0x7fffffffU
+        || (number.isSigned() && number.isNegative())) {
+        number.fileline()->v3error("threads_group mapping requires integers in 0..2147483647.");
+        return 0;
+    }
+    return static_cast<int>(number.toUInt());
+}
+
+void V3Control::addThreadsGroup(FileLine* flp, const string& module, const string& instance) {
+    V3ControlModule& mod = V3ControlResolver::s().modules().at(module);
+    mod.addThreadsGroup(flp, instance);
+    if (instance == "*") mod.addModulePragma(VPragmaType::THREADS_GROUP);
+}
+
+void V3Control::addThreadsGroupWorkers(FileLine* flp, const string& module, const string& instance,
+                                      int instances, int threads,
+                                      const std::vector<int>& workers) {
+    if (instances <= 0 || threads <= 0) {
+        flp->v3error("threads_group mapping requires positive instance and worker counts.");
+        return;
+    }
+    if (workers.size() != static_cast<size_t>(instances)) {
+        flp->v3error("threads_group mapping declares " << instances << " instances but contains "
+                                                      << workers.size() << " worker indices.");
+        return;
+    }
+    for (const int worker : workers) {
+        if (worker < 0 || worker >= threads) {
+            flp->v3error("threads_group worker index '" << worker << "' is outside 0.."
+                                                       << threads - 1 << ".");
+            return;
+        }
+    }
+    V3ControlResolver::s().modules().at(module).addThreadsGroupWorkers(
+        instance, ThreadsGroupWorkers{flp, instances, threads, workers});
+}
+
+const V3Control::ThreadsGroups* V3Control::getThreadsGroups(const string& module) {
+    const V3ControlModule* const modp = V3ControlResolver::s().modules().resolve(module);
+    return modp && !modp->threadsGroups().empty() ? &modp->threadsGroups() : nullptr;
+}
+
+string V3Control::threadsGroupInstanceName(const AstCell* cellp) {
+    return AstNode::prettyName(cellp->origName());
+}
+
+bool V3Control::isThreadsGroup(const AstCell* cellp) {
+    const AstNodeModule* const modp = cellp->modp();
+    if (modp->level() <= THREADS_GROUP_TOP_LEVEL || modp->verilatorLib()) return false;
+    if (modp->threadsGroup()) return true;
+    if (const ThreadsGroups* const selectionsp = getThreadsGroups(modp->prettyDehashOrigOrName())) {
+        const string name = threadsGroupInstanceName(cellp);
+        for (const auto& selection : *selectionsp) {
+            if (VString::wildmatch(name, selection.first)) return true;
+        }
+    }
+    return false;
+}
+
+bool V3Control::isThreadsGroup(const AstScope* scopep) {
+    const AstCell* const cellp = scopep->aboveCellp();
+    // Class scopes inherit the enclosing module's cell but are not separate units.
+    return cellp && cellp->modp() == scopep->modp() && isThreadsGroup(cellp);
+}
+
+void V3Control::checkThreadsGroupInstances(AstNetlist* netlistp) {
+    if (v3Global.opt.threads() <= 1) return;
+    // Check before inlining, which can remove every nonmatching instance of a module type.
+    std::map<string, std::set<string>> names;
+    for (AstNodeModule* modp = netlistp->modulesp(); modp;
+         modp = VN_AS(modp->nextp(), NodeModule)) {
+        if (modp->level() <= THREADS_GROUP_TOP_LEVEL) continue;
+        const string module = modp->prettyDehashOrigOrName();
+        if (!getThreadsGroups(module)) continue;
+        if (modp->verilatorLib()) {
+            for (const auto& selection : *getThreadsGroups(module)) {
+                if (!selection.second.m_mappings.empty()) {
+                    selection.second.m_flp->v3error(
+                        "Unsupported: threads_group worker assignment on a hierarchical library stub.");
+                }
+            }
+            continue;
+        }
+        for (AstNode* nodep = modp->stmtsp(); nodep; nodep = nodep->nextp()) {
+            if (const AstScope* const scopep = VN_CAST(nodep, Scope)) {
+                const AstCell* const cellp = scopep->aboveCellp();
+                if (cellp && cellp->modp() == modp) {
+                    names[module].emplace(threadsGroupInstanceName(cellp));
+                }
+            }
+        }
+    }
+    for (const auto& module : names) {
+        for (const auto& selection : *getThreadsGroups(module.first)) {
+            bool matched = false;
+            for (const auto& name : module.second) {
+                if (VString::wildmatch(name, selection.first)) {
+                    matched = true;
+                    break;
+                }
+            }
+            if (!matched) {
+                selection.second.m_flp->v3error("No threads_group instances match pattern '"
+                                                << selection.first << "' for module '"
+                                                << module.first << "'.");
+            }
+        }
+    }
+    V3Error::abortIfErrors();
+}
+
+const V3Control::ThreadsGroupWorkers* V3Control::getThreadsGroupWorkers(const string& module,
+                                                                      const string& instance,
+                                                                      const ThreadsGroup& selection,
+                                                                      size_t instances) {
+    if (selection.m_mappings.empty()) return nullptr;
+    const string description = "module '" + module + "'"
+                               + (instance == "*" ? "" : " instance pattern '" + instance + "'");
+    const ThreadsGroupWorkers* resultp = nullptr;
+    for (const ThreadsGroupWorkers& mapping : selection.m_mappings) {
+        if (mapping.m_threads != v3Global.opt.threads()
+            || static_cast<size_t>(mapping.m_instances) != instances)
+            continue;
+        if (resultp) {
+            mapping.m_flp->v3error("Multiple threads_group mappings match "
+                                   << description << " with " << instances << " instances and "
+                                   << mapping.m_threads << " workers.");
+            return nullptr;
+        }
+        resultp = &mapping;
+    }
+    if (!resultp) {
+        selection.m_mappings.front().m_flp->v3error("No threads_group mapping matches "
+                                                    << description << " with " << instances
+                                                    << " instances and " << v3Global.opt.threads()
+                                                    << " workers.");
+    }
+    return resultp;
 }
 
 void V3Control::addProfileData(FileLine* fl, const string& hierDpi, uint64_t cost) {

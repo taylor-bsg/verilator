@@ -1,0 +1,12 @@
+// DESCRIPTION: Verilator: Local instance selection
+// SPDX-FileCopyrightText: 2026 Wilson Snyder
+// SPDX-License-Identifier: CC0-1.0
+
+`verilator_config
+threads_group -module "instance_tile"
+    -workers 12->2: { 0 0 0 0 0 0 1 1 1 1 1 1 }
+    -workers 4->2: { 0 1 0 1 }
+threads_group -module "instance_router" -instance "io_*"
+    -workers 12->2: { 1 1 1 1 1 1 0 0 0 0 0 0 }
+    -workers 4->2: { 1 0 1 0 }
+threads_group -module "instance_router" -instance "diag" -workers 1->2: { 0 }

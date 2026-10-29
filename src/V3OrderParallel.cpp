@@ -25,15 +25,18 @@
 #include "V3Control.h"
 #include "V3Error.h"
 #include "V3ExecGraph.h"
+#include "V3File.h"
 #include "V3Graph.h"
 #include "V3GraphStream.h"
 #include "V3OrderCFuncEmitter.h"
 #include "V3OrderInternal.h"
 #include "V3OrderMTaskGraph.h"
 
+#include <iomanip>
 #include <map>
 #include <memory>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 VL_DEFINE_DEBUG_FUNCTIONS;
@@ -114,6 +117,169 @@ static void checkDataHazards(OrderMTaskGraph& mTaskGraph) {
 //######################################################################
 // Partitioner implementation
 
+// Compare decimal runs numerically, so generate indices 2 and 10 stay in topology order.
+static bool threadsGroupNameLess(const string& lhs, const string& rhs) {
+    size_t lpos = 0;
+    size_t rpos = 0;
+    while (lpos < lhs.size() && rpos < rhs.size()) {
+        if (std::isdigit(static_cast<unsigned char>(lhs[lpos]))
+            && std::isdigit(static_cast<unsigned char>(rhs[rpos]))) {
+            size_t lend = lpos;
+            size_t rend = rpos;
+            while (lend < lhs.size() && std::isdigit(static_cast<unsigned char>(lhs[lend])))
+                ++lend;
+            while (rend < rhs.size() && std::isdigit(static_cast<unsigned char>(rhs[rend])))
+                ++rend;
+            size_t lsignificant = lpos;
+            size_t rsignificant = rpos;
+            while (lsignificant < lend && lhs[lsignificant] == '0') ++lsignificant;
+            while (rsignificant < rend && rhs[rsignificant] == '0') ++rsignificant;
+            const bool negative = lpos && rpos && lhs[lpos - 1] == '-' && rhs[rpos - 1] == '-';
+            if (lend - lsignificant != rend - rsignificant) {
+                return negative ? lend - lsignificant > rend - rsignificant
+                                : lend - lsignificant < rend - rsignificant;
+            }
+            const int cmp = lhs.compare(lsignificant, lend - lsignificant, rhs, rsignificant,
+                                        rend - rsignificant);
+            if (cmp) return negative ? cmp > 0 : cmp < 0;
+            if (lend - lpos != rend - rpos) return lend - lpos < rend - rpos;
+            lpos = lend;
+            rpos = rend;
+        } else {
+            if (lhs[lpos] != rhs[rpos]) return lhs[lpos] < rhs[rpos];
+            ++lpos;
+            ++rpos;
+        }
+    }
+    return lhs.size() < rhs.size();
+}
+
+using ThreadsGroupInstance = std::pair<string, AstScope*>;
+
+static size_t assignThreadsGroupSelection(const string& module, const string& pattern,
+                                         const std::vector<ThreadsGroupInstance>& instances,
+                                         const V3Control::ThreadsGroup* selectionp,
+                                         std::ofstream* listingp) {
+    const V3Control::ThreadsGroupWorkers* const mappingp
+        = selectionp
+              ? V3Control::getThreadsGroupWorkers(module, pattern, *selectionp, instances.size())
+              : nullptr;
+    if (listingp) {
+        *listingp << "# Selection: module " << std::quoted(VIdProtect::protectIf(module))
+                  << " instance " << std::quoted(VIdProtect::protectIf(pattern)) << " matches "
+                  << instances.size() << '\n';
+        std::map<string, size_t> names;
+        for (const ThreadsGroupInstance& instance : instances) {
+            ++names[V3Control::threadsGroupInstanceName(instance.second->aboveCellp())];
+        }
+        for (const auto& name : names) {
+            *listingp << "# Local instance " << std::quoted(VIdProtect::protectIf(name.first))
+                      << " count " << name.second << '\n';
+        }
+    }
+    for (size_t index = 0; index < instances.size(); ++index) {
+        AstScope* const scopep = instances[index].second;
+        if (mappingp) scopep->threadsGroupWorker(mappingp->m_workers[index]);
+        if (listingp) {
+            *listingp << std::quoted(VIdProtect::protectIf(module)) << '\t' << index << '\t'
+                      << (mappingp ? cvtToStr(scopep->threadsGroupWorker()) : "auto") << '\t'
+                      << std::quoted(AstNode::prettyName(scopep->nameProtect())) << '\t'
+                      << std::quoted(VIdProtect::protectIf(pattern)) << '\n';
+        }
+    }
+    return mappingp ? instances.size() : 0;
+}
+
+void V3Order::assignThreadsGroups(AstNetlist* netlistp) {
+    if (v3Global.opt.threads() <= 1) return;
+    // Number instances across parameter specializations and execution regions. Rebuilding the
+    // inventory separately for each graph would renumber units absent from that region.
+    std::map<string, std::vector<ThreadsGroupInstance>> modules;
+    for (AstNodeModule* modp = netlistp->modulesp(); modp;
+         modp = VN_AS(modp->nextp(), NodeModule)) {
+        if (!modp->threadsGroup() && !V3Control::getThreadsGroups(modp->prettyDehashOrigOrName())) {
+            continue;
+        }
+        for (AstNode* nodep = modp->stmtsp(); nodep; nodep = nodep->nextp()) {
+            if (AstScope* const scopep = VN_CAST(nodep, Scope)) {
+                if (V3Control::isThreadsGroup(scopep)) {
+                    modules[modp->prettyDehashOrigOrName()].emplace_back(scopep->prettyName(),
+                                                                         scopep);
+                }
+            }
+        }
+    }
+    std::unique_ptr<std::ofstream> listingp;
+    if (v3Global.opt.threadsGroupList()) {
+        const string filename
+            = v3Global.opt.makeDir() + '/' + v3Global.opt.prefix() + "__threads_groups.txt";
+        listingp.reset(V3File::new_ofstream(filename));
+        if (!*listingp) v3fatal("Cannot write threads_group listing '" << filename << "'.");
+        *listingp << "# module\tinstance_index\tworker_index\tinstance\tinstance_pattern\n";
+    }
+    size_t placed = 0;
+    for (auto& module : modules) {
+        std::vector<ThreadsGroupInstance>& instances = module.second;
+        std::sort(instances.begin(), instances.end(),
+                  [](const ThreadsGroupInstance& lhs, const ThreadsGroupInstance& rhs) {
+                      return threadsGroupNameLess(lhs.first, rhs.first);
+                  });
+        std::unordered_set<const AstScope*> selected;
+        if (const V3Control::ThreadsGroups* const selectionsp
+            = V3Control::getThreadsGroups(module.first)) {
+            for (const auto& selection : *selectionsp) {
+                std::vector<ThreadsGroupInstance> matching;
+                for (const ThreadsGroupInstance& instance : instances) {
+                    if (!VString::wildmatch(
+                            V3Control::threadsGroupInstanceName(instance.second->aboveCellp()),
+                            selection.first)) {
+                        continue;
+                    }
+                    if (!selected.emplace(instance.second).second) {
+                        selection.second.m_flp->v3error(
+                            "Instance '"
+                            << instance.first
+                            << "' matches multiple threads_group instance patterns for module '"
+                            << module.first << "'.");
+                    }
+                    matching.push_back(instance);
+                }
+                placed += assignThreadsGroupSelection(module.first, selection.first, matching,
+                                                     &selection.second, listingp.get());
+            }
+        }
+        // A metacomment can additionally mark instances not covered by configuration selectors.
+        std::vector<ThreadsGroupInstance> remaining;
+        for (const ThreadsGroupInstance& instance : instances) {
+            if (!selected.count(instance.second)) remaining.push_back(instance);
+        }
+        if (!remaining.empty()) {
+            assignThreadsGroupSelection(module.first, "*", remaining, nullptr, listingp.get());
+        }
+    }
+    V3Stats::addStatSum("MTask graph, explicitly placed units", placed);
+    V3Error::abortIfErrors();
+}
+
+static void assignThreadsGroupOwners(OrderMTaskGraph& graph) {
+    for (V3GraphVertex& vertex : graph.vertices()) {
+        LogicMTask& task = static_cast<LogicMTask&>(vertex);
+        for (const OrderMoveVertex& move : task.vertexList()) {
+            const OrderLogicVertex* const logicp = move.logicp();
+            if (!logicp) continue;
+            const AstScope* scopep = logicp->scopep();
+            while (scopep && !V3Control::isThreadsGroup(scopep)) { scopep = scopep->aboveScopep(); }
+            if (!scopep || scopep->threadsGroupWorker() < 0) continue;
+            // Worker zero is the caller, which the scheduler places after its pool threads.
+            const int worker = scopep->threadsGroupWorker();
+            const int thread = worker ? worker - 1 : v3Global.opt.threads() - 1;
+            UASSERT_OBJ(task.fixedThread() < 0 || task.fixedThread() == thread, &task,
+                        "Grouping mixed threads_group worker assignments");
+            task.fixedThread(thread);
+        }
+    }
+}
+
 // Partitioner takes the fine-grained OrderMoveGraph from V3Order and collapses
 // it into a coarse-grained graph of LogicMTask's, each of which contains of set
 // of the logic nodes from the fine-grained graph.
@@ -128,6 +294,8 @@ static std::unique_ptr<OrderMTaskGraph> partition(OrderMoveGraph& moveGraph) {
     // Add edges to eliminate data hazards
     OrderMTaskGraph::fixDataHazards(*mTaskGraphp);
     mTaskGraphp->hashGraphDebug("MTask graph after fixDataHazards()");
+
+    assignThreadsGroupOwners(*mTaskGraphp);
 
     // Merge MTask nodes together, repeatedly, until the critical path budget is reached. Coarsens
     // the graph, usually by several orders of magnitude. Some tests disable this for stability,
@@ -292,8 +460,15 @@ AstNodeStmt* V3Order::createParallel(OrderMoveGraph& moveGraph, const std::strin
 
         // Create the ExecMTask
         ExecMTask* const execMTaskp = new ExecMTask{execGraphp, scopep, emitter.getStmts()};
+        execMTaskp->fixedThread(mTaskp->fixedThread());
         if (!v3Global.opt.hierBlocks().empty()) {
             execMTaskp->threads(DpiThreadsVisitor::apply(execMTaskp));
+            if (execMTaskp->threads() > 1 && execMTaskp->fixedThread() >= 0) {
+                scopep->v3warn(E_UNSUPPORTED,
+                               "Unsupported: threads_group worker assignment for a multi-worker "
+                               "hierarchical task.");
+                V3Error::abortIfErrors();
+            }
         }
         const bool newEntry = logicMTaskToExecMTask.emplace(mTaskp, execMTaskp).second;
         UASSERT_OBJ(newEntry, mTaskp, "LogicMTasks should be processed in dependencyorder");

@@ -25,10 +25,25 @@
 #include "V3FileLine.h"
 #include "V3Mutex.h"
 
+#include <map>
+
 //######################################################################
 
 class V3Control final {
 public:
+    struct ThreadsGroupWorkers final {
+        FileLine* m_flp;  // Location of the mapping directive
+        int m_instances;  // Instance count selecting this mapping
+        int m_threads;  // Worker count selecting this mapping
+        std::vector<int> m_workers;  // Worker for each instance index
+    };
+
+    struct ThreadsGroup final {
+        FileLine* m_flp;  // Location of the instance selector
+        std::vector<ThreadsGroupWorkers> m_mappings;  // Alternative instance/worker counts
+    };
+    using ThreadsGroups = std::map<string, ThreadsGroup>;  // Local instance pattern to selection
+
     struct FsmRegisterWrapper final {
         string moduleName;
         string d;
@@ -61,6 +76,9 @@ public:
     static void addProfileData(FileLine* fl, const string& model, const string& key,
                                uint64_t cost);
     static void addScopeTraceOn(bool on, const string& scope, int levels);
+    static void addThreadsGroup(FileLine* flp, const string& module, const string& instance);
+    static void addThreadsGroupWorkers(FileLine* flp, const string& module, const string& instance,
+                                      int instances, int threads, const std::vector<int>& workers);
     static void addVarAttr(FileLine* fl, const string& module, const string& ftask,
                            VarSpecKind kind, const string& pattern, VAttrType type,
                            AstSenTree* nodep);
@@ -81,6 +99,16 @@ public:
     static uint64_t getProfileData(const string& model, const string& key);
     static FileLine* getProfileDataFileLine();
     static bool getScopeTraceOn(const string& scope);
+    static const ThreadsGroups* getThreadsGroups(const string& module);
+    static const ThreadsGroupWorkers* getThreadsGroupWorkers(const string& module,
+                                                           const string& instance,
+                                                           const ThreadsGroup& selection,
+                                                           size_t instances);
+    static string threadsGroupInstanceName(const AstCell* cellp);
+    static bool isThreadsGroup(const AstCell* cellp);
+    static bool isThreadsGroup(const AstScope* scopep);
+    static void checkThreadsGroupInstances(AstNetlist* netlistp);
+    static int threadsGroupNumber(const V3Number& number);
 
     static void contentsPushText(const string& text);
 

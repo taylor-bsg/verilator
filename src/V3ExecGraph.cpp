@@ -449,6 +449,9 @@ class PackThreads final {
             ThreadSchedule& schedule = result.back();
             for (uint32_t threadId = 0; threadId < schedule.m_threads.size(); ++threadId) {
                 for (ExecMTask* const mtaskp : readyMTasks) {
+                    if (mtaskp->threads() == 1 && mtaskp->fixedThread() >= 0
+                        && static_cast<uint32_t>(mtaskp->fixedThread()) != threadId)
+                        continue;
                     if (mode != SchedulingMode::WIDE_TASK_SCHEDULING && mtaskp->threads() > 1) {
                         mode = SchedulingMode::WIDE_TASK_DISCOVERED;
                         continue;

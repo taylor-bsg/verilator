@@ -129,6 +129,7 @@ vnum    {vnum1}|{vnum2}|{vnum3}|{vnum4}|{vnum5}
 <VLT>{
   {ws}                  { FL_FWD; FL_BRK; }  /* otherwise ignore white-space */
   {crnl}                { FL_FWD; FL_BRK; }  /* Count line numbers */
+  "->"                  { FL; return yP_MINUSGT; }
 
   "clock_enable"        { FL; return yVLT_CLOCK_ENABLE; }
   "clocker"             { FL; return yVLT_CLOCKER; }
@@ -173,6 +174,7 @@ vnum    {vnum1}|{vnum2}|{vnum3}|{vnum4}|{vnum5}
   -?"-file"             { FL; return yVLT_D_FILE; }
   -?"-function"         { FL; return yVLT_D_FUNCTION; }
   -?"-hier-dpi"         { FL; return yVLT_D_HIER_DPI; }
+  -?"-instance"         { FL; return yVLT_D_INSTANCE; }
   -?"-levels"           { FL; return yVLT_D_LEVELS; }
   -?"-lines"            { FL; return yVLT_D_LINES; }
   -?"-match"            { FL; return yVLT_D_MATCH; }

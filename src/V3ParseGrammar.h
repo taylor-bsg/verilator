@@ -42,6 +42,9 @@ public:
     VLifetime m_varLifetime;  // Static/Automatic for next signal
     // Kind of Verilator control file variable spec
     V3Control::VarSpecKind m_vltVarSpecKind = V3Control::VarSpecKind::VAR;
+    string m_vltThreadsGroupModule;  // Module selected by the current threads_group directive
+    string m_vltThreadsGroupInstance;  // Local instance pattern selected by the directive
+    std::vector<int> m_vltThreadsGroupWorkers;  // Worker list currently being parsed
     bool m_impliedDecl = false;  // Allow implied wire declarations
     bool m_varDeclTyped = false;  // Var got reg/wire for dedup check
     bool m_pinAnsi = false;  // In ANSI parameter or port list

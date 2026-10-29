@@ -276,6 +276,7 @@ BISONPRE_VERSION(3.7,%define api.header.include {"V3ParseBison.h"})
 %token<fl>              yVLT_D_FILE     "--file"
 %token<fl>              yVLT_D_FUNCTION "--function"
 %token<fl>              yVLT_D_HIER_DPI "--hier-dpi"
+%token<fl>              yVLT_D_INSTANCE "--instance"
 %token<fl>              yVLT_D_LEVELS   "--levels"
 %token<fl>              yVLT_D_LINES    "--lines"
 %token<fl>              yVLT_D_MATCH    "--match"
@@ -8518,12 +8519,33 @@ vltItem:
                         { V3Control::addProfileData($<fl>1, *$2, $3->toUQuad()); }
         |       yVLT_PROFILE_DATA vltDModel vltDMtask vltDCost
                         { V3Control::addProfileData($<fl>1, *$2, *$3, $4->toUQuad()); }
-        |       yVLT_THREADS_GROUP vltDModule
-                        { V3Control::addModulePragma(*$2, VPragmaType::THREADS_GROUP); }
+        |       yVLT_THREADS_GROUP vltDModule vltDInstanceE
+                        { GRAMMARP->m_vltThreadsGroupModule = *$2;
+                          GRAMMARP->m_vltThreadsGroupInstance = $3 ? *$3 : "*";
+                          V3Control::addThreadsGroup($1, *$2, GRAMMARP->m_vltThreadsGroupInstance); }
+                vltThreadsGroupWorkersE
         |       yVLT_FSM_REGISTER_WRAPPER vltDModule vltDFsmD vltDFsmQ vltDFsmClock vltDFsmResetE vltDFsmResetValueE
                         { V3Control::addFsmRegisterWrapper($<fl>1, *$2, *$3, *$4, *$5, *$6, *$7); }
         |       yVLT_VERILATOR_LIB vltDModule
                         { V3Control::addModulePragma(*$2, VPragmaType::VERILATOR_LIB); }
+        ;
+
+// Verilator extension: select a mapping by instance count and --threads.
+vltThreadsGroupWorkersE:
+                /* empty */
+        |       vltThreadsGroupWorkersE yVLT_D_WORKERS yaINTNUM yP_MINUSGT yaINTNUM ':' '{'
+                        { GRAMMARP->m_vltThreadsGroupWorkers.clear(); }
+                vltThreadsGroupWorkerList '}'
+                        { V3Control::addThreadsGroupWorkers($2, GRAMMARP->m_vltThreadsGroupModule,
+                              GRAMMARP->m_vltThreadsGroupInstance,
+                              V3Control::threadsGroupNumber(*$3), V3Control::threadsGroupNumber(*$5),
+                              GRAMMARP->m_vltThreadsGroupWorkers); }
+        ;
+
+vltThreadsGroupWorkerList:
+                /* empty */
+        |       vltThreadsGroupWorkerList yaINTNUM
+                        { GRAMMARP->m_vltThreadsGroupWorkers.push_back(V3Control::threadsGroupNumber(*$2)); }
         ;
 
 vltOffFront<errcodeen>:
@@ -8586,6 +8608,11 @@ vltDFsmResetValueE<strp>:  // [--reset_value <arg>]
 
 vltDHierDpi<strp>:  // --hier-dpi <arg>
                 yVLT_D_HIER_DPI str                     { $$ = $2; }
+        ;
+
+vltDInstanceE<strp>:  // [--instance <arg>]
+                /* empty */                            { $$ = nullptr; }
+        |       yVLT_D_INSTANCE str                     { $$ = $2; }
         ;
 
 vltDLevels<nump>:  // --levels <arg>

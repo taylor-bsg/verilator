@@ -2086,6 +2086,24 @@ Summary:
    mtasks the model is to be partitioned into. If unspecified, Verilator
    approximates a good value.
 
+.. option:: --threads-group-list
+
+   With :vlopt:`--threads` above 1, write
+   :file:`<prefix>__threads_groups.txt` in :vlopt:`--Mdir`, listing the
+   retained instances marked by :option:`threads_group`. The tab-separated
+   columns are original module type, zero-based instance index, assigned
+   worker index (or ``auto``), hierarchical instance name, and instance
+   pattern. Indices start at zero within each module type and pattern.
+   Comment lines summarize the matching instance count and local instance
+   names for each selection. Names and patterns are quoted, and honor
+   :vlopt:`--protect-ids`.
+
+   The worker column uses the same numbering as :option:`threads_group`:
+   worker 0 is the thread calling ``eval()``, and workers 1 through ``N-1``
+   are the worker pool. It reports the explicit assignment, not the
+   automatic scheduler's choices. An automatically placed unit may have
+   tasks on several workers. This option does not change scheduling.
+
 .. option:: --timescale <timeunit>/<timeprecision>
 
    Sets default timeunit and timeprecision when "`timescale" does not occur

@@ -18,6 +18,7 @@
 
 #include "V3OrderMTaskGraph.h"
 
+#include "V3Control.h"
 #include "V3Global.h"
 #include "V3GraphStream.h"
 #include "V3InstrCount.h"
@@ -197,6 +198,8 @@ void OrderMTaskGraph::addEdge(LogicMTask* fromp, LogicMTask* top) {
 }
 
 void OrderMTaskGraph::mergeMTasks(LogicMTask* recipientp, LogicMTask* donorp) {
+    UASSERT_OBJ(recipientp->canMergeWith(donorp), recipientp, "Conflicting explicit owners");
+    if (recipientp->m_fixedThread < 0) recipientp->m_fixedThread = donorp->m_fixedThread;
     UASSERT_OBJ(recipientp != donorp, recipientp, "Should not merge an MTask with itself");
 
     // Note we redirect the edges before updating the cost and critical paths of the recipient,
@@ -430,7 +433,7 @@ class OrderMTaskGraphBuilder final {
                 if (scopep->user3p()) return VN_AS(scopep->user3p(), Scope);
                 // Walk up to the nearest group
                 AstScope* resultp = scopep;
-                while (!resultp->modp()->threadsGroup() && !resultp->isTop()) {
+                while (!V3Control::isThreadsGroup(resultp) && !resultp->isTop()) {
                     resultp = resultp->user3p() ? VN_AS(resultp->user3p(), Scope)
                                                 : resultp->aboveScopep();
                 }
@@ -513,7 +516,10 @@ class OrderMTaskGraphBuilder final {
         // Nothing to do unless some module is marked
         {
             AstNodeModule* modp = v3Global.rootp()->modulesp();
-            while (modp && !modp->threadsGroup()) modp = VN_AS(modp->nextp(), NodeModule);
+            while (modp && !modp->threadsGroup()
+                   && !V3Control::getThreadsGroups(modp->prettyDehashOrigOrName())) {
+                modp = VN_AS(modp->nextp(), NodeModule);
+            }
             if (!modp) return vtx2Part;
         }
         const VNUser3InUse user3InUse;

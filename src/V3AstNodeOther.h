@@ -1902,6 +1902,7 @@ class AstScope final : public AstNode {
 
     // An AstScope->name() is special: . indicates an uninlined scope, __DOT__ an inlined scope
     string m_name;  // Name
+    int m_threadsGroupWorker = -1;  // Assigned threads_group worker; -1 means automatic
 public:
     AstScope(FileLine* fl, AstNodeModule* modp, const string& name, AstScope* aboveScopep,
              AstCell* aboveCellp)
@@ -1932,6 +1933,8 @@ public:
     AstCell* aboveCellp() const { return m_aboveCellp; }
     void aboveCellp(AstCell* nodep) { m_aboveCellp = nodep; }
     bool isTop() const VL_MT_SAFE { return aboveScopep() == nullptr; }  // At top of hierarchy
+    int threadsGroupWorker() const { return m_threadsGroupWorker; }
+    void threadsGroupWorker(int worker) { m_threadsGroupWorker = worker; }
 };
 class AstSenItem final : public AstNode {
     // Parents:  SENTREE

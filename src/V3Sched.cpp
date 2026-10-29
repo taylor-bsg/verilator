@@ -784,6 +784,7 @@ VirtIfaceTriggers::VscpTrigMap VirtIfaceTriggers::makeVscpToTrigMap(const Trigge
 // Top level entry-point to scheduling
 
 void schedule(AstNetlist* netlistp) {
+    V3Order::assignThreadsGroups(netlistp);
     const auto addSizeStat = [](const string& name, const LogicByScope& lbs) {
         uint64_t size = 0;
         lbs.foreachLogic([&](AstNode* nodep) { size += nodep->nodeCount(); });

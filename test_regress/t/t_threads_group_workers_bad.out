@@ -1,0 +1,23 @@
+%Error: t/t_threads_group_workers_bad.vlt:7:37: threads_group mapping requires positive instance and worker counts.
+    7 | threads_group -module "worker_tile" -workers 0->2: { }
+      |                                     ^~~~~~~~
+        ... See the manual at https://verilator.org/verilator_doc.html?v=latest for more assistance.
+%Error: t/t_threads_group_workers_bad.vlt:8:37: threads_group mapping requires positive instance and worker counts.
+    8 | threads_group -module "worker_tile" -workers 1->0: { 0 }
+      |                                     ^~~~~~~~
+%Error: t/t_threads_group_workers_bad.vlt:9:37: threads_group mapping declares 4 instances but contains 3 worker indices.
+    9 | threads_group -module "worker_tile" -workers 4->2: { 0 1 0 }
+      |                                     ^~~~~~~~
+%Error: t/t_threads_group_workers_bad.vlt:10:37: threads_group worker index '2' is outside 0..1.
+   10 | threads_group -module "worker_tile" -workers 1->2: { 2 }
+      |                                     ^~~~~~~~
+%Error: t/t_threads_group_workers_bad.vlt:11:54: threads_group mapping requires integers in 0..2147483647.
+   11 | threads_group -module "worker_tile" -workers 1->2: { 'x }
+      |                                                      ^~
+%Error: t/t_threads_group_workers_bad.vlt:12:54: threads_group mapping requires integers in 0..2147483647.
+   12 | threads_group -module "worker_tile" -workers 1->2: { 64'h100000000 }
+      |                                                      ^~~~~~~~~~~~~
+%Error: t/t_threads_group_workers_bad.vlt:13:54: threads_group mapping requires integers in 0..2147483647.
+   13 | threads_group -module "worker_tile" -workers 1->2: { 32'h80000000 }
+      |                                                      ^~~~~~~~~~~~
+%Error: Exiting due to
