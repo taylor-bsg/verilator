@@ -466,11 +466,12 @@ class OrderMTaskGraphBuilder final {
     // Making a whole group one MTask could create a cycle, through a path that
     // leaves the group and comes back, so groups need to be split into 'parts'.
     //
-    // A path in the graph 'visits' a group if either the path starts in the
-    // group, or it enters it from outside the group.
+    // A path in the graph 'enters' a group on an edge from outside that group.
+    // Starting inside a group does not count as an entry.
     //
-    // Define 'depth' of a vertex as the largest number of group visits on
-    // any path to that vertex. This can be computed in topological order.
+    // Define 'depth' of a vertex as the largest number of group entries on
+    // any path to that vertex. Sources have depth 0, including grouped sources.
+    // This can be computed in topological order.
     //
     // A 'part' is then the vertices of one group at the same depth. Vertices
     // in the same part will start as a single MTask.
@@ -479,7 +480,8 @@ class OrderMTaskGraphBuilder final {
     // vertices in no group as their own MTasks) form a DAG. The original
     // graph is acyclic, so a cycle could only appear by contracting a part
     // into one MTask, with the cycle leaving the part and entering it again.
-    // The depth never goes down along an edge, and goes up on entering a part.
+    // The depth never goes down along an edge, and goes up on entering a group
+    // from outside it.
     // As all vertices of a part have the same depth, closing the cycle
     // would require the depth to decrease, which never happens.
     //
@@ -488,15 +490,16 @@ class OrderMTaskGraphBuilder final {
     //
     //   i (-,0) ---------+
     //                    v
-    //   a (G,1) -------> c (G,1)         b (G,2) -------> d (G,2)
+    //   a (G,0) -------> c (G,1)         b (G,1) -------> d (G,1)
     //   |                                ^                ^
-    //   +--------------> t (-,1) --------+                |
+    //   +--------------> t (-,0) --------+                |
     //                    |                                |
     //                    +--------------------------------+
     //
-    // i has no group upstream, so c stays at depth 1 with a. The path
-    // a -> t -> b visits G twice, so b and d are at depth 2, and G is split
-    // into the parts {a, c} and {b, d}.
+    // a starts at depth 0, while i -> c and t -> b each enter G, so c, b,
+    // and d have depth 1. G is split into the parts {a} and {b, c, d}.
+    // Keeping a separate lets it run without waiting for i. Counting the
+    // starting group as an entry would combine a and c and add that wait.
     // As one MTask, G would form a cycle with t.
     //
     // This is still conservative and might break a group into more parts than
@@ -519,11 +522,11 @@ class OrderMTaskGraphBuilder final {
         while (const V3GraphVertex* const vtxp = stream.nextp()) {
             const OrderMoveVertex* const mVtxp = vtxp->as<OrderMoveVertex>();
             const AstScope* const groupp = groupOf(mVtxp);
-            // Compute the depth of this vertex (largest number of group visits
+            // Compute the depth of this vertex (largest number of group entries
             // along any path leading to this vertex, see comment above).
             uint32_t depth = 0;
             if (!groupp) {
-                // Vertex not in a group, so a group visit does not start here.
+                // Vertex not in a group, so no edge enters a group here.
                 // Its depth is the max of its predecessors.
                 for (const V3GraphEdge& edge : vtxp->inEdges()) {
                     const Part& from = vtx2Part.at(edge.fromp()->as<OrderMoveVertex>());
@@ -531,17 +534,16 @@ class OrderMTaskGraphBuilder final {
                 }
             } else {
                 // Vertex is in a group. The depth is the highest of:
-                // - 1 (path starts in the group, counts as a visit)
-                // - the depth of predecessors in the same group (within same visit)
-                // - depth + 1 of predecessors not in same group (visit enter group)
-                depth = 1;
+                // - 0 (path starts in the group, without entering it)
+                // - the depth of predecessors in the same group (no entry)
+                // - depth + 1 of predecessors not in the same group (entry)
                 for (const V3GraphEdge& edge : vtxp->inEdges()) {
                     const Part& from = vtx2Part.at(edge.fromp()->as<OrderMoveVertex>());
                     if (from.groupp != groupp) {
-                        // Edge enters from different/no group, increase visit count
+                        // Edge enters from different/no group, increase entry count
                         depth = std::max(depth, from.depth + 1);
                     } else {
-                        // Edge is within same group, does not increase visit count
+                        // Edge is within same group, does not increase entry count
                         depth = std::max(depth, from.depth);
                     }
                 }
