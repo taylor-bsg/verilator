@@ -28,6 +28,8 @@
 
 #include "V3LinkResolve.h"
 
+#include "V3Control.h"
+#include "V3Stats.h"
 #include "V3String.h"
 #include "V3Task.h"
 
@@ -73,6 +75,40 @@ class LinkResolveVisitor final : public VNVisitor {
         m_modp = nodep;
         m_senitemCvtNum = 0;
         iterateChildren(nodep);
+        markKeptPorts(nodep);
+    }
+    // A threads_group module keeps its input ports as variables of each instance, so the
+    // instances' code can be shared, except the ports selected by -port_squash
+    static void markKeptPorts(AstNodeModule* modp) {
+        if (modp->isTop() || modp->verilatorLib()) return;
+        const string name = modp->prettyDehashOrigOrName();
+        if (!modp->threadsGroup() && !V3Control::getThreadsGroups(name)) return;
+        const V3Control::ThreadsGroupPortSquashes& squashes
+            = V3Control::getThreadsGroupPortSquashes(name);
+        std::vector<bool> used(squashes.size(), false);
+        size_t kept = 0;
+        for (AstNode* stmtp = modp->stmtsp(); stmtp; stmtp = stmtp->nextp()) {
+            AstVar* const varp = VN_CAST(stmtp, Var);
+            if (!varp || varp->direction() != VDirection::INPUT) continue;
+            bool squashed = false;
+            for (size_t i = 0; i < squashes.size(); ++i) {
+                const string& pattern = squashes[i].m_pattern;
+                if (pattern.empty() || VString::wildmatch(varp->prettyName(), pattern)) {
+                    squashed = used[i] = true;
+                }
+            }
+            if (squashed) continue;
+            varp->keepPort(true);
+            ++kept;
+        }
+        for (size_t i = 0; i < squashes.size(); ++i) {
+            if (used[i] || squashes[i].m_pattern.empty()) continue;
+            squashes[i].m_flp->v3warn(
+                BADVLTPRAGMA, "threads_group -port_squash "
+                                  << AstNode::prettyNameQ(squashes[i].m_pattern)
+                                  << " matches no input port of module " << modp->prettyNameQ());
+        }
+        V3Stats::addStatSum("Threads group, kept input ports", kept);
     }
     void visit(AstClass* nodep) override {
         VL_RESTORER(m_classp);

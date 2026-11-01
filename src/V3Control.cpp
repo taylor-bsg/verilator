@@ -234,6 +234,7 @@ class V3ControlModule final {
     std::unordered_set<std::string> m_coverageOffBlocks;  // List of block names for coverage_off
     std::set<VPragmaType> m_modPragmas;  // List of Pragmas for modules
     V3Control::ThreadsGroups m_threadsGroups;  // Instance selectors and their worker mappings
+    V3Control::ThreadsGroupPortSquashes m_portSquashes;  // Ports selected by -port_squash
     bool m_hasFsmRegisterWrapper = false;  // Whether descriptor has been set
     bool m_inline = false;  // Whether to force the inline
     bool m_inlineValue = false;  // The inline value (on/off)
@@ -255,6 +256,8 @@ public:
                                 entry.second.m_mappings.end());
             }
         }
+        m_portSquashes.insert(m_portSquashes.end(), m.m_portSquashes.begin(),
+                              m.m_portSquashes.end());
         if (m.m_hasFsmRegisterWrapper) {
             m_fsmRegisterWrapper = m.m_fsmRegisterWrapper;
             m_hasFsmRegisterWrapper = true;
@@ -296,6 +299,10 @@ public:
     void addThreadsGroup(FileLine* flp, const string& instance) {
         m_threadsGroups.emplace(instance, V3Control::ThreadsGroup{flp, {}});
     }
+    void addPortSquash(const V3Control::ThreadsGroupPortSquash& squash) {
+        m_portSquashes.push_back(squash);
+    }
+    const V3Control::ThreadsGroupPortSquashes& portSquashes() const { return m_portSquashes; }
     void addThreadsGroupWorkers(const string& instance,
                                const V3Control::ThreadsGroupWorkers& mapping) {
         m_threadsGroups.at(instance).m_mappings.push_back(mapping);
@@ -1014,6 +1021,18 @@ void V3Control::addThreadsGroupWorkers(FileLine* flp, const string& module, cons
 const V3Control::ThreadsGroups* V3Control::getThreadsGroups(const string& module) {
     const V3ControlModule* const modp = V3ControlResolver::s().modules().resolve(module);
     return modp && !modp->threadsGroups().empty() ? &modp->threadsGroups() : nullptr;
+}
+
+void V3Control::addThreadsGroupPortSquash(FileLine* flp, const string& module,
+                                          const string& pattern) {
+    V3ControlResolver::s().modules().at(module).addPortSquash({flp, pattern});
+}
+
+const V3Control::ThreadsGroupPortSquashes&
+V3Control::getThreadsGroupPortSquashes(const string& module) {
+    static const ThreadsGroupPortSquashes s_none;
+    const V3ControlModule* const modp = V3ControlResolver::s().modules().resolve(module);
+    return modp ? modp->portSquashes() : s_none;
 }
 
 string V3Control::threadsGroupInstanceName(const AstCell* cellp) {

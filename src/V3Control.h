@@ -44,6 +44,13 @@ public:
     };
     using ThreadsGroups = std::map<string, ThreadsGroup>;  // Local instance pattern to selection
 
+    // Input ports of a threads_group module optimized as usual, instead of kept per instance
+    struct ThreadsGroupPortSquash final {
+        FileLine* m_flp;  // Location of the name
+        string m_pattern;  // Port name pattern, empty for all ports
+    };
+    using ThreadsGroupPortSquashes = std::vector<ThreadsGroupPortSquash>;
+
     struct FsmRegisterWrapper final {
         string moduleName;
         string d;
@@ -100,6 +107,9 @@ public:
     static FileLine* getProfileDataFileLine();
     static bool getScopeTraceOn(const string& scope);
     static const ThreadsGroups* getThreadsGroups(const string& module);
+    static void addThreadsGroupPortSquash(FileLine* flp, const string& module,
+                                          const string& pattern);
+    static const ThreadsGroupPortSquashes& getThreadsGroupPortSquashes(const string& module);
     static const ThreadsGroupWorkers* getThreadsGroupWorkers(const string& module,
                                                            const string& instance,
                                                            const ThreadsGroup& selection,

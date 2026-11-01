@@ -20,6 +20,7 @@ test.execute()
 
 # Separate ready source logic from logic awaiting an external group entry.
 # The feedback instance must also split across the path leaving and re-entering it.
-test.file_grep(test.stats, r'MTask graph, threads_group parts\s+(\d+)', 4)
+# One more part holds the logic of the groups' kept input ports.
+test.file_grep(test.stats, r'MTask graph, threads_group parts\s+(\d+)', 5)
 
 test.passes()

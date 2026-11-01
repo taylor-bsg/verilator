@@ -285,6 +285,7 @@ BISONPRE_VERSION(3.7,%define api.header.include {"V3ParseBison.h"})
 %token<fl>              yVLT_D_MTASK    "--mtask"
 %token<fl>              yVLT_D_PARAM    "--param"
 %token<fl>              yVLT_D_PORT     "--port"
+%token<fl>              yVLT_D_PORT_SQUASH "--port_squash"
 %token<fl>              yVLT_D_RULE     "--rule"
 %token<fl>              yVLT_D_Q        "--q"
 %token<fl>              yVLT_D_RESET    "--reset"
@@ -8540,6 +8541,19 @@ vltThreadsGroupWorkersE:
                               GRAMMARP->m_vltThreadsGroupInstance,
                               V3Control::threadsGroupNumber(*$3), V3Control::threadsGroupNumber(*$5),
                               GRAMMARP->m_vltThreadsGroupWorkers); }
+        |       vltThreadsGroupWorkersE yVLT_D_PORT_SQUASH
+                        { V3Control::addThreadsGroupPortSquash($2, GRAMMARP->m_vltThreadsGroupModule,
+                                                               ""); }
+        |       vltThreadsGroupWorkersE yVLT_D_PORT_SQUASH vltThreadsGroupPortSquashList
+        ;
+
+vltThreadsGroupPortSquashList:
+                str
+                        { V3Control::addThreadsGroupPortSquash($<fl>1, GRAMMARP->m_vltThreadsGroupModule,
+                                                               *$1); }
+        |       vltThreadsGroupPortSquashList str
+                        { V3Control::addThreadsGroupPortSquash($<fl>2, GRAMMARP->m_vltThreadsGroupModule,
+                                                               *$2); }
         ;
 
 vltThreadsGroupWorkerList:

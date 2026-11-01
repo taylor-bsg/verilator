@@ -83,10 +83,12 @@ class DataflowOptimize final {
                     varp->isPrimaryIO()  // Top level port - readable
                     || varp->isSigUserRdPublic()  // Readable by user
                     || varp->constPoolEntry()  // Held in V3ConstPool lookup cache, keep
+                    || varp->keepPort()  // Kept port of a threads_group module
                     ;
                 const bool hasExtWr =  //
                     (varp->isPrimaryIO() && varp->isNonOutput())  // Top level port - writable
                     || varp->isSigUserRWPublic()  // Writable by user
+                    || varp->keepPort()  // Kept port of a threads_group module
                     ;
                 if (hasExtRd) DfgVertexVar::setHasExtRdRefs(vscp);
                 if (hasExtWr) DfgVertexVar::setHasExtWrRefs(vscp);
