@@ -1,0 +1,5 @@
+%Error: t/t_threads_group_instance_bad.vlt:9:1: threads_group -instance pattern 'nope*' matches no instance of module 'rtr'.
+    9 | threads_group -module "rtr" -instance "nope*"
+      | ^~~~~~~~~~~~~
+        ... See the manual at https://verilator.org/verilator_doc.html?v=latest for more assistance.
+%Error: Exiting due to

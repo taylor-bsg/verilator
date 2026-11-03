@@ -30,6 +30,7 @@
 #include "V3Inline.h"
 
 #include "V3AstUserAllocator.h"
+#include "V3Control.h"
 #include "V3Graph.h"
 #include "V3Stats.h"
 
@@ -176,18 +177,20 @@ class InlineModCellVertex final : public InlineModEitherVertex {
     AstCell* const m_cellp;  // The cell (instance)
     const char* m_doInlineWyp = nullptr;  // First reason this instance should be inlined
     bool m_flatten = false;  // Whether this cell and below already flattened (avoid O(n^2))
+    const bool m_threadsGroup;  // Instance V3OrderParallel partitions as a group
 
 public:
     InlineModCellVertex(InlineModGraph& graph, AstCell* cellp)
         : InlineModEitherVertex{graph}
-        , m_cellp{cellp} {}
+        , m_cellp{cellp}
+        , m_threadsGroup{v3Global.opt.mtasks() && V3Control::isThreadsGroup(cellp)} {}
     ~InlineModCellVertex() override = default;
 
     // ACCESSORS
     AstCell* cellp() const { return m_cellp; }
     bool doInline() const { return m_doInlineWyp; }
     void setDoInline(const char* whyp) {
-        if (!m_doInlineWyp) m_doInlineWyp = whyp;
+        if (!m_threadsGroup && !m_doInlineWyp) m_doInlineWyp = whyp;
     }
     bool flatten() const { return m_flatten; }
     void setFlatten() { m_flatten = true; }
@@ -276,10 +279,6 @@ class InlineModGraphBuilder final : public VNVisitor {
 
         // Don't inline public modules by default
         if (nodep->modPublic()) vtxp->setNoInlineSoft("Public module");
-        // Keep the instances V3OrderParallel partitions as groups
-        if (v3Global.opt.mtasks() && nodep->threadsGroup()) {
-            vtxp->setNoInlineHard("threads_group");
-        }
 
         // Iterate children
         VL_RESTORER(m_modVtxp);

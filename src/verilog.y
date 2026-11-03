@@ -276,6 +276,7 @@ BISONPRE_VERSION(3.7,%define api.header.include {"V3ParseBison.h"})
 %token<fl>              yVLT_D_FILE     "--file"
 %token<fl>              yVLT_D_FUNCTION "--function"
 %token<fl>              yVLT_D_HIER_DPI "--hier-dpi"
+%token<fl>              yVLT_D_INSTANCE "--instance"
 %token<fl>              yVLT_D_LEVELS   "--levels"
 %token<fl>              yVLT_D_LINES    "--lines"
 %token<fl>              yVLT_D_MATCH    "--match"
@@ -8520,6 +8521,8 @@ vltItem:
                         { V3Control::addProfileData($<fl>1, *$2, *$3, $4->toUQuad()); }
         |       yVLT_THREADS_GROUP vltDModule
                         { V3Control::addModulePragma(*$2, VPragmaType::THREADS_GROUP); }
+        |       yVLT_THREADS_GROUP vltDModule yVLT_D_INSTANCE str
+                        { V3Control::addThreadsGroupInstance($<fl>1, *$2, *$4); }
         |       yVLT_FSM_REGISTER_WRAPPER vltDModule vltDFsmD vltDFsmQ vltDFsmClock vltDFsmResetE vltDFsmResetValueE
                         { V3Control::addFsmRegisterWrapper($<fl>1, *$2, *$3, *$4, *$5, *$6, *$7); }
         |       yVLT_VERILATOR_LIB vltDModule

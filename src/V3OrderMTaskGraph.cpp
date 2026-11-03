@@ -18,6 +18,7 @@
 
 #include "V3OrderMTaskGraph.h"
 
+#include "V3Control.h"
 #include "V3Global.h"
 #include "V3GraphStream.h"
 #include "V3InstrCount.h"
@@ -430,7 +431,7 @@ class OrderMTaskGraphBuilder final {
                 if (scopep->user3p()) return VN_AS(scopep->user3p(), Scope);
                 // Walk up to the nearest group
                 AstScope* resultp = scopep;
-                while (!resultp->modp()->threadsGroup() && !resultp->isTop()) {
+                while (!V3Control::isThreadsGroup(resultp) && !resultp->isTop()) {
                     resultp = resultp->user3p() ? VN_AS(resultp->user3p(), Scope)
                                                 : resultp->aboveScopep();
                 }
@@ -510,7 +511,9 @@ class OrderMTaskGraphBuilder final {
         // Nothing to do unless some module is marked
         {
             AstNodeModule* modp = v3Global.rootp()->modulesp();
-            while (modp && !modp->threadsGroup()) modp = VN_AS(modp->nextp(), NodeModule);
+            while (modp && !V3Control::hasThreadsGroup(modp)) {
+                modp = VN_AS(modp->nextp(), NodeModule);
+            }
             if (!modp) return vtx2Part;
         }
         const VNUser3InUse user3InUse;

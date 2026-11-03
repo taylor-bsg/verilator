@@ -22,6 +22,8 @@
 #include "V3Os.h"
 #include "V3String.h"
 
+#include <algorithm>
+#include <map>
 #include <memory>
 #include <set>
 #include <unordered_map>
@@ -230,6 +232,7 @@ class V3ControlModule final {
     V3Control::FsmRegisterWrapper m_fsmRegisterWrapper;  // FSM wrapper descriptor
     std::unordered_set<std::string> m_coverageOffBlocks;  // List of block names for coverage_off
     std::set<VPragmaType> m_modPragmas;  // List of Pragmas for modules
+    std::map<string, FileLine*> m_threadsGroupInstances;  // threads_group -instance patterns
     bool m_hasFsmRegisterWrapper = false;  // Whether descriptor has been set
     bool m_inline = false;  // Whether to force the inline
     bool m_inlineValue = false;  // The inline value (on/off)
@@ -254,6 +257,8 @@ public:
         for (auto it = m.m_modPragmas.cbegin(); it != m.m_modPragmas.cend(); ++it) {
             m_modPragmas.insert(*it);
         }
+        m_threadsGroupInstances.insert(m.m_threadsGroupInstances.begin(),
+                                       m.m_threadsGroupInstances.end());
     }
     void updateFinalize() {}
 
@@ -280,6 +285,12 @@ public:
         return m_hasFsmRegisterWrapper ? &m_fsmRegisterWrapper : nullptr;
     }
     void addModulePragma(VPragmaType pragma) { m_modPragmas.insert(pragma); }
+    void addThreadsGroupInstance(FileLine* fl, const string& pattern) {
+        m_threadsGroupInstances.emplace(pattern, fl);
+    }
+    const std::map<string, FileLine*>& threadsGroupInstances() const {
+        return m_threadsGroupInstances;
+    }
 
     void apply(AstNodeModule* modp) {
         if (m_inline) {
@@ -950,6 +961,73 @@ void V3Control::addInline(FileLine* fl, const string& module, const string& ftas
 
 void V3Control::addModulePragma(const string& module, VPragmaType pragma) {
     V3ControlResolver::s().modules().at(module).addModulePragma(pragma);
+}
+
+void V3Control::addThreadsGroupInstance(FileLine* fl, const string& module,
+                                        const string& pattern) {
+    V3ControlResolver::s().modules().at(module).addThreadsGroupInstance(fl, pattern);
+}
+
+// The -instance patterns of a module, if any
+static const std::map<string, FileLine*>* threadsGroupInstances(const AstNodeModule* modp) {
+    const V3ControlModule* const cmodp
+        = V3ControlResolver::s().modules().resolve(modp->prettyDehashOrigOrName());
+    if (!cmodp || cmodp->threadsGroupInstances().empty()) return nullptr;
+    return &cmodp->threadsGroupInstances();
+}
+
+bool V3Control::hasThreadsGroup(const AstNodeModule* modp) {
+    return modp->threadsGroup() || threadsGroupInstances(modp);
+}
+
+bool V3Control::isThreadsGroup(const AstCell* cellp) {
+    const AstNodeModule* const modp = cellp->modp();
+    if (modp->threadsGroup()) return true;
+    const std::map<string, FileLine*>* const patternsp = threadsGroupInstances(modp);
+    if (!patternsp) return false;
+    const string name = AstNode::prettyName(cellp->origName());
+    for (const auto& it : *patternsp) {
+        if (VString::wildmatch(name, it.first)) return true;
+    }
+    return false;
+}
+
+bool V3Control::isThreadsGroup(const AstScope* scopep) {
+    // A class scope has the cell of its enclosing instance, but is not that instance
+    const AstCell* const cellp = scopep->aboveCellp();
+    return cellp && cellp->modp() == scopep->modp() && isThreadsGroup(cellp);
+}
+
+void V3Control::checkThreadsGroupInstances(AstNetlist* netlistp) {
+    if (!v3Global.opt.mtasks()) return;
+    // Instance names of each module with -instance patterns, across its parameterizations.
+    // Matching instances are never inlined, so a pattern matching none of these matches nothing.
+    std::map<string, std::set<string>> names;
+    for (AstNodeModule* modp = netlistp->modulesp(); modp;
+         modp = VN_AS(modp->nextp(), NodeModule)) {
+        if (!threadsGroupInstances(modp)) continue;
+        std::set<string>& modNames = names[modp->prettyDehashOrigOrName()];
+        for (AstNode* nodep = modp->stmtsp(); nodep; nodep = nodep->nextp()) {
+            const AstScope* const scopep = VN_CAST(nodep, Scope);
+            if (scopep && scopep->aboveCellp()) {
+                modNames.emplace(AstNode::prettyName(scopep->aboveCellp()->origName()));
+            }
+        }
+    }
+    for (const auto& it : names) {
+        const V3ControlModule* const cmodp = V3ControlResolver::s().modules().resolve(it.first);
+        for (const auto& pattern : cmodp->threadsGroupInstances()) {
+            const bool matched
+                = std::any_of(it.second.begin(), it.second.end(), [&](const string& name) {
+                      return VString::wildmatch(name, pattern.first);
+                  });
+            if (!matched) {
+                pattern.second->v3error("threads_group -instance pattern '"
+                                        << pattern.first << "' matches no instance of module '"
+                                        << it.first << "'.");
+            }
+        }
+    }
 }
 
 void V3Control::addProfileData(FileLine* fl, const string& hierDpi, uint64_t cost) {

@@ -317,7 +317,7 @@ The grammar of control commands is as follows:
 
    Same as :option:`/*verilator&32;split_var*/` metacomment.
 
-.. option:: threads_group -module "<modulename>"
+.. option:: threads_group -module "<modulename>" [-instance "<pattern>"]
 
    With :vlopt:`--threads` above 1, partition each instance of the module
    as a group, keeping its logic in a few mtasks instead of spreading it
@@ -326,9 +326,15 @@ The grammar of control commands is as follows:
    of the design, such as the tiles of a many-core system. Marking a module
    that is a large part of the design reduces parallelism. Several modules
    may be marked, and logic belongs to the nearest marked instance above
-   it. The module is not inlined. Ignored for the top module.
+   it. The grouped instances are not inlined. Ignored for the top module.
 
-   Same as :option:`/*verilator&32;threads_group*/` metacomment.
+   With ``-instance``, only the instances whose instance name matches the
+   wildcard pattern are groups, for a module instantiated in different
+   roles, such as a router inside each tile and between the tiles. It is
+   an error if the pattern matches no instance.
+
+   Without ``-instance``, same as the
+   :option:`/*verilator&32;threads_group*/` metacomment.
 
 .. option:: timing_off [-file "<filename>" [-lines <line> [ - <line>]]]
 

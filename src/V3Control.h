@@ -57,6 +57,7 @@ public:
                                const string& match);
     static void addInline(FileLine* fl, const string& module, const string& ftask, bool on);
     static void addModulePragma(const string& module, VPragmaType pragma);
+    static void addThreadsGroupInstance(FileLine* fl, const string& module, const string& pattern);
     static void addProfileData(FileLine* fl, const string& hierDpi, uint64_t cost);
     static void addProfileData(FileLine* fl, const string& model, const string& key,
                                uint64_t cost);
@@ -81,6 +82,13 @@ public:
     static uint64_t getProfileData(const string& model, const string& key);
     static FileLine* getProfileDataFileLine();
     static bool getScopeTraceOn(const string& scope);
+    // Whether some instances of the module may be threads_group instances
+    static bool hasThreadsGroup(const AstNodeModule* modp);
+    // Whether the instance is partitioned as a threads_group
+    static bool isThreadsGroup(const AstCell* cellp);
+    static bool isThreadsGroup(const AstScope* scopep);
+    // Error on threads_group -instance patterns that match no instance
+    static void checkThreadsGroupInstances(AstNetlist* netlistp);
 
     static void contentsPushText(const string& text);
 
