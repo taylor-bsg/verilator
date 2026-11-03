@@ -230,6 +230,9 @@ class V3ControlModule final {
     V3Control::FsmRegisterWrapper m_fsmRegisterWrapper;  // FSM wrapper descriptor
     std::unordered_set<std::string> m_coverageOffBlocks;  // List of block names for coverage_off
     std::set<VPragmaType> m_modPragmas;  // List of Pragmas for modules
+    // threads_group -workers, the worker of each instance, by instance count and --threads
+    std::map<std::pair<uint32_t, uint32_t>, std::pair<FileLine*, std::vector<uint32_t>>>
+        m_threadsGroupWorkers;
     bool m_hasFsmRegisterWrapper = false;  // Whether descriptor has been set
     bool m_inline = false;  // Whether to force the inline
     bool m_inlineValue = false;  // The inline value (on/off)
@@ -254,6 +257,8 @@ public:
         for (auto it = m.m_modPragmas.cbegin(); it != m.m_modPragmas.cend(); ++it) {
             m_modPragmas.insert(*it);
         }
+        m_threadsGroupWorkers.insert(m.m_threadsGroupWorkers.begin(),
+                                     m.m_threadsGroupWorkers.end());
     }
     void updateFinalize() {}
 
@@ -280,6 +285,13 @@ public:
         return m_hasFsmRegisterWrapper ? &m_fsmRegisterWrapper : nullptr;
     }
     void addModulePragma(VPragmaType pragma) { m_modPragmas.insert(pragma); }
+    bool addThreadsGroupWorkers(FileLine* fl, uint32_t instances, uint32_t threads,
+                                const std::vector<uint32_t>& workers) {
+        return m_threadsGroupWorkers
+            .emplace(std::make_pair(instances, threads), std::make_pair(fl, workers))
+            .second;
+    }
+    const auto& threadsGroupWorkers() const { return m_threadsGroupWorkers; }
 
     void apply(AstNodeModule* modp) {
         if (m_inline) {
@@ -950,6 +962,57 @@ void V3Control::addInline(FileLine* fl, const string& module, const string& ftas
 
 void V3Control::addModulePragma(const string& module, VPragmaType pragma) {
     V3ControlResolver::s().modules().at(module).addModulePragma(pragma);
+}
+
+void V3Control::addThreadsGroupWorkers(FileLine* fl, const string& module, uint32_t instances,
+                                       uint32_t threads, const std::vector<uint32_t>& workers) {
+    if (workers.size() != instances) {
+        fl->v3error("threads_group -workers lists " << workers.size() << " workers for "
+                                                    << instances << " instances.");
+    }
+    for (const uint32_t worker : workers) {
+        if (worker >= threads) {
+            fl->v3error("threads_group -workers worker " << worker << " is not below the "
+                                                         << threads << " workers.");
+        }
+    }
+    if (!V3ControlResolver::s().modules().at(module).addThreadsGroupWorkers(fl, instances, threads,
+                                                                            workers)) {
+        fl->v3error("threads_group -workers " << instances << "->" << threads
+                                              << " is given more than once for module '" << module
+                                              << "'.");
+    }
+}
+
+void V3Control::applyThreadsGroupWorkers(const std::vector<AstScope*>& scopes) {
+    // Instances of each threads_group module in hierarchy order, across its parameterizations
+    std::map<string, std::vector<AstScope*>> instances;
+    for (AstScope* const scopep : scopes) {
+        if (scopep->modp()->threadsGroup()) {
+            instances[scopep->modp()->prettyDehashOrigOrName()].push_back(scopep);
+        }
+    }
+    const uint32_t threads = v3Global.opt.threads();
+    for (const auto& it : instances) {
+        const V3ControlModule* const modp = V3ControlResolver::s().modules().resolve(it.first);
+        if (!modp) continue;
+        const auto& lists = modp->threadsGroupWorkers();
+        const auto listIt = lists.find(std::make_pair(it.second.size(), threads));
+        if (listIt == lists.end()) {
+            // Automatic placement, unless lists for this --threads expect other counts
+            for (const auto& other : lists) {
+                if (other.first.second != threads) continue;
+                other.second.first->v3error("threads_group -workers "
+                                            << other.first.first << "->" << threads << " expects "
+                                            << other.first.first << " instances, but module '"
+                                            << it.first << "' has " << it.second.size() << ".");
+            }
+            continue;
+        }
+        for (size_t i = 0; i < it.second.size(); ++i) {
+            it.second[i]->threadsGroupWorker(listIt->second.second[i]);
+        }
+    }
 }
 
 void V3Control::addProfileData(FileLine* fl, const string& hierDpi, uint64_t cost) {

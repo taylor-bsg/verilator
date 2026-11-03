@@ -292,6 +292,7 @@ AstNodeStmt* V3Order::createParallel(OrderMoveGraph& moveGraph, const std::strin
 
         // Create the ExecMTask
         ExecMTask* const execMTaskp = new ExecMTask{execGraphp, scopep, emitter.getStmts()};
+        execMTaskp->fixedThread(mTaskp->fixedThread());
         if (!v3Global.opt.hierBlocks().empty()) {
             execMTaskp->threads(DpiThreadsVisitor::apply(execMTaskp));
         }

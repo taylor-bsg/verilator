@@ -317,7 +317,7 @@ The grammar of control commands is as follows:
 
    Same as :option:`/*verilator&32;split_var*/` metacomment.
 
-.. option:: threads_group -module "<modulename>"
+.. option:: threads_group -module "<modulename>" [-workers <instances>-><threads>: { <worker>... }]...
 
    With :vlopt:`--threads` above 1, partition each instance of the module
    as a group, keeping its logic in a few mtasks instead of spreading it
@@ -328,7 +328,22 @@ The grammar of control commands is as follows:
    may be marked, and logic belongs to the nearest marked instance above
    it. The module is not inlined. Ignored for the top module.
 
-   Same as :option:`/*verilator&32;threads_group*/` metacomment.
+   With ``-workers``, when the module has ``<instances>`` instances and
+   :vlopt:`--threads` is ``<threads>``, each instance runs on the worker at
+   its position in the list. Instances are numbered in hierarchy order,
+   as instantiated, including across parameterizations of the module.
+   Worker 0 is the thread calling ``eval()``, and workers 1 to
+   ``<threads>-1`` are the worker pool. Several lists may be given for
+   different instance and thread counts; with no list for the
+   :vlopt:`--threads` value, the instances are placed automatically.
+   For example, to alternate four tiles between two threads:
+
+   .. code-block:: sv
+
+      threads_group -module "tile" -workers 4->2: { 0 1 0 1 }
+
+   Without ``-workers``, same as :option:`/*verilator&32;threads_group*/`
+   metacomment.
 
 .. option:: timing_off [-file "<filename>" [-lines <line> [ - <line>]]]
 
