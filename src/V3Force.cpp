@@ -854,6 +854,25 @@ public:
                                    nullptr);
     }
 
+    // Force-aware read of the constant bit range 'selPathp' at 'lsb' of a wide bitwise variable,
+    // without materializing the whole value
+    AstNodeExpr* createForceReadSelExpression(const VarForceInfo& varInfo,
+                                              AstVarRef* originalRefp, AstNodeExpr* selPathp,
+                                              int lsb) const {
+        FileLine* const flp = originalRefp->fileline();
+        AstVarRef* const refp = originalRefp->cloneTreePure(false);
+        refp->access(VAccess::READ);
+        markNonReplaceable(refp);
+        AstCMethodHard* const callp = new AstCMethodHard{
+            flp, new AstVarRef{flp, varInfo.m_forceVecVscp, VAccess::READ},
+            VCMethod::FORCE_READ_SEL, makeConst32(flp, refp->varp()->width())};
+        callp->addPinsp(addRhsValueReads(varInfo, refp));
+        callp->addPinsp(makeConst32(flp, lsb));
+        callp->addPinsp(makeConst32(flp, selPathp->width()));
+        callp->dtypeFrom(selPathp);
+        return callp;
+    }
+
     AstNodeExpr* createForceReadIndexExpression(const VarForceInfo& varInfo,
                                                 AstNodeExpr* originalExprp,
                                                 AstNodeExpr* indexExprp) const {
@@ -1087,6 +1106,7 @@ public:
 
 class ForceConvertVisitor final : public VNVisitor {
     ForceState& m_state;  // Force state shared across passes
+    VDouble0 m_releaseReadSels;  // Statistic tracking
 
     void visit(AstAssignForce* nodep) override {
         UINFO(2, "Converting force statement: " << nodep << "\n");
@@ -1294,6 +1314,11 @@ class ForceConvertVisitor final : public VNVisitor {
                     *varInfop, basep,
                     ForceState::buildFlattenIndexExpr(flp, rangeInfo.m_arrayInfo));
                 if (selp) { forceReadp = ForceState::rebuildSelPath(lhsp, forceReadp); }
+            } else if (selp && releasedVarp->isWide() && !varInfop->m_forceRdVscp) {
+                // Read back only the released bits
+                forceReadp = m_state.createForceReadSelExpression(*varInfop, lhsVarRefp, lhsp,
+                                                                  rangeInfo.m_rangeLsb);
+                ++m_releaseReadSels;
             } else {
                 forceReadp
                     = selp ? ForceState::rebuildSelPath(
@@ -1318,6 +1343,9 @@ public:
     ForceConvertVisitor(AstNetlist* nodep, ForceState& state)
         : m_state{state} {
         iterateAndNextNull(nodep->modulesp());
+    }
+    ~ForceConvertVisitor() override {
+        V3Stats::addStat("Release read-back sels", m_releaseReadSels);
     }
 };
 
