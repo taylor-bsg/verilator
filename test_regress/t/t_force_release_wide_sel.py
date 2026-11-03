@@ -13,7 +13,8 @@ test.scenarios('simulator')
 
 test.compile(verilator_flags2=["--stats"])
 
-test.file_grep(test.stats, r'Release read-back sels\s+(\d+)', 5)
+if test.vlt_all:
+    test.file_grep(test.stats, r'Release read-back sels\s+(\d+)', 5)
 
 test.execute()
 
