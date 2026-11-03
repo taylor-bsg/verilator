@@ -317,7 +317,7 @@ The grammar of control commands is as follows:
 
    Same as :option:`/*verilator&32;split_var*/` metacomment.
 
-.. option:: threads_group -module "<modulename>" [-instance "<pattern>"] [-port_squash ["<port>"...]] [-workers <instances>-><workers>: { <worker indices> }]...
+.. option:: threads_group -module "<modulename>" [-instance "<pattern>"] [-port_squash [{ <threads>... }] ["<port>"...]] [-workers <instances>-><workers>: { <worker indices> }]...
 
    With :vlopt:`--threads` above 1, partition each instance of the module
    as a group, keeping its logic in a few mtasks instead of spreading it
@@ -353,7 +353,11 @@ The grammar of control commands is as follows:
    the named input ports as usual, where ``*`` and ``?`` match as in
    ``-instance``; with no names, all input ports. A name matching no input
    port is an error. Ports are a property of the module, so this applies
-   to all its instances that are not inlined.
+   to all its instances that are not inlined. A braced list of thread
+   counts limits a ``-port_squash`` to those :vlopt:`--threads` values: for
+   example ``-port_squash { 2 4 8 } "clk_i"`` keeps the clock port at one
+   thread, where it lets instances share code, and optimizes it with 2, 4
+   or 8 threads. Names are checked at every thread count.
 
    The optional ``-workers`` list assigns instances to logical workers. In
    ``16->8:``, 16 is the number of retained instances of this module type

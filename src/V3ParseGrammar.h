@@ -45,6 +45,8 @@ public:
     string m_vltThreadsGroupModule;  // Module selected by the current threads_group directive
     string m_vltThreadsGroupInstance;  // Local instance pattern selected by the directive
     std::vector<int> m_vltThreadsGroupWorkers;  // Worker list currently being parsed
+    std::vector<std::pair<FileLine*, string>> m_vltPortSquash;  // -port_squash names being parsed
+    std::vector<int> m_vltPortSquashThreads;  // -port_squash thread counts, empty for all
     bool m_impliedDecl = false;  // Allow implied wire declarations
     bool m_varDeclTyped = false;  // Var got reg/wire for dedup check
     bool m_pinAnsi = false;  // In ANSI parameter or port list

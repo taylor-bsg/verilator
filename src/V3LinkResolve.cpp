@@ -92,9 +92,18 @@ class LinkResolveVisitor final : public VNVisitor {
             if (!varp || varp->direction() != VDirection::INPUT) continue;
             bool squashed = false;
             for (size_t i = 0; i < squashes.size(); ++i) {
-                const string& pattern = squashes[i].m_pattern;
-                if (pattern.empty() || VString::wildmatch(varp->prettyName(), pattern)) {
-                    squashed = used[i] = true;
+                const V3Control::ThreadsGroupPortSquash& squash = squashes[i];
+                if (!squash.m_pattern.empty()
+                    && !VString::wildmatch(varp->prettyName(), squash.m_pattern)) {
+                    continue;
+                }
+                // A name is checked at every thread count, but squashes only at its counts
+                used[i] = true;
+                const std::vector<int>& counts = squash.m_threads;
+                if (counts.empty()
+                    || std::find(counts.begin(), counts.end(), v3Global.opt.threads())
+                           != counts.end()) {
+                    squashed = true;
                 }
             }
             if (squashed) continue;

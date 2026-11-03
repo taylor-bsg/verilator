@@ -8542,18 +8542,37 @@ vltThreadsGroupWorkersE:
                               V3Control::threadsGroupNumber(*$3), V3Control::threadsGroupNumber(*$5),
                               GRAMMARP->m_vltThreadsGroupWorkers); }
         |       vltThreadsGroupWorkersE yVLT_D_PORT_SQUASH
-                        { V3Control::addThreadsGroupPortSquash($2, GRAMMARP->m_vltThreadsGroupModule,
-                                                               ""); }
-        |       vltThreadsGroupWorkersE yVLT_D_PORT_SQUASH vltThreadsGroupPortSquashList
+                        { GRAMMARP->m_vltPortSquash.clear();
+                          GRAMMARP->m_vltPortSquashThreads.clear(); }
+                vltThreadsGroupPortSquashThreadsE vltThreadsGroupPortSquashList
+                        { if (GRAMMARP->m_vltPortSquash.empty()) {
+                              GRAMMARP->m_vltPortSquash.emplace_back($2, "");  // All ports
+                          }
+                          for (const auto& name : GRAMMARP->m_vltPortSquash) {
+                              V3Control::addThreadsGroupPortSquash(
+                                  name.first, GRAMMARP->m_vltThreadsGroupModule, name.second,
+                                  GRAMMARP->m_vltPortSquashThreads);
+                          } }
         ;
 
 vltThreadsGroupPortSquashList:
-                str
-                        { V3Control::addThreadsGroupPortSquash($<fl>1, GRAMMARP->m_vltThreadsGroupModule,
-                                                               *$1); }
+                /* empty */
         |       vltThreadsGroupPortSquashList str
-                        { V3Control::addThreadsGroupPortSquash($<fl>2, GRAMMARP->m_vltThreadsGroupModule,
-                                                               *$2); }
+                        { GRAMMARP->m_vltPortSquash.emplace_back($<fl>2, *$2); }
+        ;
+
+vltThreadsGroupPortSquashThreadsE:  // [{ <threads>... }]
+                /* empty */
+        |       '{' vltThreadsGroupPortSquashThreadList '}'
+        ;
+
+vltThreadsGroupPortSquashThreadList:
+                yaINTNUM
+                        { GRAMMARP->m_vltPortSquashThreads.push_back(
+                              V3Control::threadsGroupThreadCount($<fl>1, *$1)); }
+        |       vltThreadsGroupPortSquashThreadList yaINTNUM
+                        { GRAMMARP->m_vltPortSquashThreads.push_back(
+                              V3Control::threadsGroupThreadCount($<fl>2, *$2)); }
         ;
 
 vltThreadsGroupWorkerList:

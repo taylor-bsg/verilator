@@ -1,0 +1,5 @@
+%Error: t/t_threads_group_port_squash_threads_bad.vlt:7:45: threads_group -port_squash thread counts must be 1 or more
+    7 | threads_group -module "tile" -port_squash { 0 } "in"
+      |                                             ^
+        ... See the manual at https://verilator.org/verilator_doc.html?v=latest for more assistance.
+%Error: Exiting due to

@@ -48,6 +48,7 @@ public:
     struct ThreadsGroupPortSquash final {
         FileLine* m_flp;  // Location of the name
         string m_pattern;  // Port name pattern, empty for all ports
+        std::vector<int> m_threads;  // Applies only at these --threads counts; empty for all
     };
     using ThreadsGroupPortSquashes = std::vector<ThreadsGroupPortSquash>;
 
@@ -107,8 +108,9 @@ public:
     static FileLine* getProfileDataFileLine();
     static bool getScopeTraceOn(const string& scope);
     static const ThreadsGroups* getThreadsGroups(const string& module);
+    static int threadsGroupThreadCount(FileLine* flp, const V3Number& number);
     static void addThreadsGroupPortSquash(FileLine* flp, const string& module,
-                                          const string& pattern);
+                                          const string& pattern, const std::vector<int>& threads);
     static const ThreadsGroupPortSquashes& getThreadsGroupPortSquashes(const string& module);
     static const ThreadsGroupWorkers* getThreadsGroupWorkers(const string& module,
                                                            const string& instance,

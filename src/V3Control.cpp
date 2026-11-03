@@ -1023,9 +1023,15 @@ const V3Control::ThreadsGroups* V3Control::getThreadsGroups(const string& module
     return modp && !modp->threadsGroups().empty() ? &modp->threadsGroups() : nullptr;
 }
 
+int V3Control::threadsGroupThreadCount(FileLine* flp, const V3Number& number) {
+    const int threads = threadsGroupNumber(number);
+    if (threads < 1) flp->v3error("threads_group -port_squash thread counts must be 1 or more");
+    return threads;
+}
+
 void V3Control::addThreadsGroupPortSquash(FileLine* flp, const string& module,
-                                          const string& pattern) {
-    V3ControlResolver::s().modules().at(module).addPortSquash({flp, pattern});
+                                          const string& pattern, const std::vector<int>& threads) {
+    V3ControlResolver::s().modules().at(module).addPortSquash({flp, pattern, threads});
 }
 
 const V3Control::ThreadsGroupPortSquashes&

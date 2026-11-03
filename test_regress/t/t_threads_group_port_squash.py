@@ -14,7 +14,9 @@ test.scenarios('vltmt')
 prefix = test.vm_prefix
 combined = {}
 # Configuration, and the number of input ports of 'tile' kept, or None for no statistic
+# (a braced thread list limits a squash to those counts; this test uses 2 threads)
 for vlt, kept in [(None, 3), ("t/t_threads_group_port_squash.vlt", 1),
+                  ("t/t_threads_group_port_squash_threads.vlt", 2),
                   ("t/t_threads_group_port_squash_all.vlt", None)]:
     test.clean_objs()
     test.vm_prefix = prefix + f"_{kept}"
