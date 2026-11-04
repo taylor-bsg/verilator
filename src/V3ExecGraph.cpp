@@ -1052,7 +1052,8 @@ void addThreadEndWrapper(AstExecGraph* const execGraphp) {
     if (v3Global.opt.profExec()) { addCStmt("VL_EXEC_TRACE_ADD_RECORD(vlSymsp).execGraphEnd();"); }
 }
 void addThreadStartToExecGraph(AstExecGraph* const execGraphp,
-                               const std::vector<std::pair<AstCFunc*, uint32_t>>& funcps) {
+                               const std::vector<std::pair<AstCFunc*, uint32_t>>& funcps,
+                               bool preserveThreadIds) {
     // FileLine used for constructing nodes below
     FileLine* const fl = v3Global.rootp()->fileline();
     const string progress = "vlSymsp->__Vm_schedule_progress_" + execGraphp->name();
@@ -1067,29 +1068,34 @@ void addThreadStartToExecGraph(AstExecGraph* const execGraphp,
     addCStmt(progress + ".start();");
 
     const uint32_t last = funcps.size() - 1;
-    if (!v3Global.opt.hierBlocks().empty() && last > 0) {
-        addCStmt("for (size_t i = 0; i < " + std::to_string(last) + "; ++i) {\n"  //
+    // Empty schedules must not renumber explicitly placed workers or move their work
+    // onto the calling thread. Keep automatic schedules' existing compact dispatch.
+    const uint32_t callerThread
+        = preserveThreadIds ? v3Global.opt.threads() - 1 : funcps.back().second;
+    const uint32_t poolSlots = preserveThreadIds ? v3Global.opt.threads() - 1 : last;
+    if (!v3Global.opt.hierBlocks().empty() && poolSlots > 0) {
+        addCStmt("for (size_t i = 0; i < " + std::to_string(poolSlots) + "; ++i) {\n"  //
                  + "indexes.push_back(vlSymsp->__Vm_threadPoolp->assignWorkerIndex());\n"  //
                  + "}");
     }
     uint32_t i = 0;
     for (const auto& pair : funcps) {
         AstCFunc* const funcp = pair.first;
-        if (i != last) {
-            // The first N-1 will run on the thread pool.
+        if (pair.second != callerThread) {
+            const uint32_t poolIndex = preserveThreadIds ? pair.second : i;
             AstCStmt* const cstmtp = new AstCStmt{fl};
             execGraphp->runfuncp()->addStmtsp(cstmtp);
             cstmtp->add("vlSymsp->__Vm_threadPoolp->workerp(");
             if (v3Global.opt.hierChild() || !v3Global.opt.hierBlocks().empty()) {
-                cstmtp->add("indexes[" + std::to_string(i) + "]");
+                cstmtp->add("indexes[" + std::to_string(poolIndex) + "]");
             } else {
-                cstmtp->add(std::to_string(i));
+                cstmtp->add(std::to_string(poolIndex));
             }
             cstmtp->add(")->addTask(");
             cstmtp->add(new AstAddrOfCFunc{fl, funcp});
             cstmtp->add(", vlSelf);");
         } else {
-            // The last will run on the main thread.
+            // Run only the calling thread's scheduled work inline.
             AstCCall* const callp = new AstCCall{fl, funcp};
             callp->dtypeSetVoid();
             callp->argTypes("vlSelf");
@@ -1102,16 +1108,17 @@ void addThreadStartToExecGraph(AstExecGraph* const execGraphp,
     if (v3Global.opt.profExec()) {
         addCStmt("VL_EXEC_TRACE_ADD_RECORD(vlSymsp).threadScheduleWaitBegin();");
     }
-    // Wait for each pool thread to publish that it is done. The last thread function ran on
-    // this thread, so it is already finished.
-    for (uint32_t i = 0; i < last; ++i) {
-        addCStmt(progress + ".waitDone(" + std::to_string(funcps[i].second) + ");");
+    // Wait for every dispatched function, including when the caller has no work.
+    for (const auto& pair : funcps) {
+        if (pair.second != callerThread) {
+            addCStmt(progress + ".waitDone(" + std::to_string(pair.second) + ");");
+        }
     }
     if (v3Global.opt.profExec()) {
         addCStmt("VL_EXEC_TRACE_ADD_RECORD(vlSymsp).threadScheduleWaitEnd();");
     }
     // Free all assigned worker indices in this section
-    if (!v3Global.opt.hierBlocks().empty() && last > 0) {
+    if (!v3Global.opt.hierBlocks().empty() && poolSlots > 0) {
         addCStmt("vlSymsp->__Vm_threadPoolp->freeWorkerIndexes(indexes);");
     }
 }
@@ -1161,7 +1168,13 @@ void implementExecGraph(AstExecGraph* const execGraphp, const ThreadSchedule& sc
     UASSERT(!funcps.empty(), "Non-empty ExecGraph yields no threads?");
 
     // Start the thread functions from the function that dispatches the graph.
-    addThreadStartToExecGraph(execGraphp, funcps);
+    bool preserveThreadIds = false;
+    for (const auto& thread : schedule.m_threads) {
+        for (const ExecMTask* const mtaskp : thread) {
+            if (mtaskp->threads() == 1 && mtaskp->fixedThread() >= 0) preserveThreadIds = true;
+        }
+    }
+    addThreadStartToExecGraph(execGraphp, funcps, preserveThreadIds);
 }
 
 void createRunFunction(AstExecGraph* const execGraphp) {

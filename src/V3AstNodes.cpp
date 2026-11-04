@@ -3840,7 +3840,7 @@ void AstScope::dump(std::ostream& str) const {
     if (threadsGroupWorker() >= 0) str << " [threadsGroupWorker=" << threadsGroupWorker() << "]";
 }
 void AstScope::dumpJson(std::ostream& str) const {
-    dumpJsonNumFunc(str, threadsGroupWorker);
+    if (threadsGroupWorker() >= 0) { str << ",\"threadsGroupWorker\":" << threadsGroupWorker(); }
     dumpJsonGen(str);
 }
 string AstScope::nameDotless() const {

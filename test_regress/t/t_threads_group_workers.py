@@ -23,4 +23,11 @@ test.execute()
 test.file_grep(test.stats, r'MTask graph, threads_group parts\s+(\d+)', 14)
 test.file_grep(test.stats, r'MTask graph, threads_group placed parts\s+(\d+)', 14)
 
+# Verify the values in the dump, including worker zero and nested groups.
+scope_json = test.glob_one(test.obj_dir + '/' + test.vm_prefix + '_*_scope.tree.json')
+test.file_grep(scope_json, r'"type":"SCOPE","name":"t.g\[0\].u"[^\n]*"threadsGroupWorker":0')
+test.file_grep(scope_json, r'"type":"SCOPE","name":"t.g\[1\].u"[^\n]*"threadsGroupWorker":1')
+test.file_grep(scope_json, r'"type":"SCOPE","name":"t.g\[0\].u.u"[^\n]*"threadsGroupWorker":1')
+test.file_grep(scope_json, r'"type":"SCOPE","name":"t.g\[1\].u.u"[^\n]*"threadsGroupWorker":0')
+
 test.passes()

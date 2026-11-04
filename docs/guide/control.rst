@@ -330,12 +330,17 @@ The grammar of control commands is as follows:
 
    With ``-workers``, when the module has ``<instances>`` instances and
    :vlopt:`--threads` is ``<threads>``, each instance runs on the worker at
-   its position in the list. Instances are numbered in hierarchy order,
-   as instantiated, including across parameterizations of the module.
-   Worker 0 is the thread calling ``eval()``, and workers 1 to
-   ``<threads>-1`` are the worker pool. Several lists may be given for
-   different instance and thread counts; with no list for the
-   :vlopt:`--threads` value, the instances are placed automatically.
+   its position in the list. Instances are numbered in the depth-first
+   order of the elaborated hierarchy, across parameterizations of the
+   module; this is not necessarily the order of their names or
+   declarations. Worker 0 is the thread calling ``eval()``, and workers 1
+   to ``<threads>-1`` are the worker pool. Several lists may be given for
+   different instance and thread counts. With no list for the
+   :vlopt:`--threads` value, the instances are placed automatically. With
+   :vlopt:`--hierarchical`, counts and workers are those of each separately
+   Verilated block, and a block using several threads is placed
+   automatically.
+
    For example, to alternate four tiles between two threads:
 
    .. code-block:: sv
